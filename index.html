@@ -365,11 +365,85 @@
         }
         .checklist-status.complete { color: #00b894; }
         .checklist-status.incomplete { color: #e17055; }
+
+        .all-courses-section {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid #0f3460;
+            margin-top: 24px;
+        }
+        .all-courses-section h3 { color: #a29bfe; margin-bottom: 14px; font-size: 16px; text-align: center; }
+        .all-courses-table {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 6px;
+        }
+        .ac-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            border: 1px solid #0f3460;
+            background: #1a1a2e;
+        }
+        .ac-row .ac-code { font-weight: 700; min-width: 50px; color: #dfe6e9; }
+        .ac-row .ac-name { flex: 1; color: #aaa; }
+        .ac-row .ac-prereqs { color: #fdcb6e; font-size: 10px; }
+        .ac-row .ac-avail { color: #74b9ff; font-size: 10px; }
+
+        .plan-switcher {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #16213e;
+            border-radius: 12px;
+            padding: 10px 16px;
+            border: 1px solid #0f3460;
+            margin-bottom: 16px;
+            gap: 12px;
+        }
+        .plan-tabs { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
+        .plan-tab {
+            padding: 6px 14px;
+            border-radius: 5px;
+            font-size: 13px;
+            cursor: pointer;
+            border: 1px solid #0f3460;
+            background: #1a1a2e;
+            color: #aaa;
+            transition: all 0.15s;
+        }
+        .plan-tab:hover { border-color: #a29bfe; color: #eee; }
+        .plan-tab.active { background: #6c5ce7; border-color: #6c5ce7; color: #fff; font-weight: 600; }
+        .plan-actions { display: flex; gap: 6px; }
+        .plan-btn {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            border: 1px solid #0f3460;
+            background: #1a1a2e;
+            color: #aaa;
+        }
+        .plan-btn:hover { border-color: #a29bfe; color: #eee; }
+        .plan-btn.plan-delete:hover { border-color: #e17055; color: #e17055; }
     </style>
 </head>
 <body>
     <h1>Cal State LA Math — 4-Semester Planner</h1>
     <p class="subtitle">Add courses to each semester. Warnings appear if prerequisites haven't been scheduled in a prior semester.</p>
+
+    <div class="plan-switcher">
+        <div class="plan-tabs" id="plan-tabs"></div>
+        <div class="plan-actions">
+            <button class="plan-btn plan-new" onclick="newPlan()">+ New Plan</button>
+            <button class="plan-btn plan-rename" onclick="renamePlan()">Rename</button>
+            <button class="plan-btn plan-delete" onclick="deletePlan()">Delete</button>
+        </div>
+    </div>
 
     <div class="prior-courses-bar">
         <label>Already Completed / Transferred:</label>
@@ -454,6 +528,11 @@
             <div class="wishlist-dropdown" id="wishlist-dropdown"></div>
         </div>
         <div class="wishlist-items" id="wishlist-items"></div>
+    </div>
+
+    <div class="all-courses-section">
+        <h3>All Courses Reference</h3>
+        <div class="all-courses-table" id="all-courses-table"></div>
     </div>
 
 <script>
@@ -569,16 +648,79 @@ const REQ_REQUIRED = ["4600", "4570", "4550"];
 const REQ_ELECTIVE_POOL = ["4550", "4570", "4650", "4010", "4030", "4100", "4200", "4460", "4660", "4670", "4680", "4690", "4700", "4710", "4720", "4740", "4750", "4800", "4840", "5021", "5100", "5210", "5220", "5402", "5500", "5510", "5520", "5530", "5540", "5690", "5700", "5710", "5740", "5980"];
 const REQ_ELECTIVES_NEEDED = 4;
 
-// Load from localStorage
-let plan = JSON.parse(localStorage.getItem("csula-math-plan") || "null") || { fall2026: [], spring2027: [], fall2027: [], spring2028: [] };
-let priorCourses = JSON.parse(localStorage.getItem("csula-math-prior") || "[]");
+// Plan management
+const EMPTY_PLAN = { fall2026: [], spring2027: [], fall2027: [], spring2028: [] };
+let allPlans = JSON.parse(localStorage.getItem("csula-math-plans") || "null");
+if (!allPlans) {
+    // Migrate from old single-plan format
+    const oldPlan = JSON.parse(localStorage.getItem("csula-math-plan") || "null");
+    allPlans = [{ name: "Plan A", data: oldPlan || {...EMPTY_PLAN}, prior: JSON.parse(localStorage.getItem("csula-math-prior") || "[]") }];
+}
+let currentPlanIdx = parseInt(localStorage.getItem("csula-math-plan-idx") || "0");
+if (currentPlanIdx >= allPlans.length) currentPlanIdx = 0;
 
-function savePlan() {
-    localStorage.setItem("csula-math-plan", JSON.stringify(plan));
+let plan = allPlans[currentPlanIdx].data;
+let priorCourses = allPlans[currentPlanIdx].prior || [];
+
+function savePlans() {
+    allPlans[currentPlanIdx].data = plan;
+    allPlans[currentPlanIdx].prior = priorCourses;
+    localStorage.setItem("csula-math-plans", JSON.stringify(allPlans));
+    localStorage.setItem("csula-math-plan-idx", currentPlanIdx.toString());
 }
 
-function savePrior() {
-    localStorage.setItem("csula-math-prior", JSON.stringify(priorCourses));
+function savePlan() { savePlans(); }
+function savePrior() { savePlans(); }
+
+function switchPlan(idx) {
+    // Save current first
+    allPlans[currentPlanIdx].data = plan;
+    allPlans[currentPlanIdx].prior = priorCourses;
+    // Switch
+    currentPlanIdx = idx;
+    plan = allPlans[currentPlanIdx].data;
+    priorCourses = allPlans[currentPlanIdx].prior || [];
+    savePlans();
+    renderPlanTabs();
+    renderPriorTags();
+    render();
+    renderWishlist();
+}
+
+function newPlan() {
+    const name = prompt("Name for new plan:", `Plan ${String.fromCharCode(65 + allPlans.length)}`);
+    if (!name) return;
+    allPlans.push({ name, data: {...EMPTY_PLAN, fall2026: [], spring2027: [], fall2027: [], spring2028: []}, prior: [] });
+    switchPlan(allPlans.length - 1);
+}
+
+function renamePlan() {
+    const name = prompt("Rename current plan:", allPlans[currentPlanIdx].name);
+    if (!name) return;
+    allPlans[currentPlanIdx].name = name;
+    savePlans();
+    renderPlanTabs();
+}
+
+function deletePlan() {
+    if (allPlans.length <= 1) { alert("Can't delete the only plan."); return; }
+    if (!confirm(`Delete "${allPlans[currentPlanIdx].name}"?`)) return;
+    allPlans.splice(currentPlanIdx, 1);
+    currentPlanIdx = Math.min(currentPlanIdx, allPlans.length - 1);
+    plan = allPlans[currentPlanIdx].data;
+    priorCourses = allPlans[currentPlanIdx].prior || [];
+    savePlans();
+    renderPlanTabs();
+    renderPriorTags();
+    render();
+    renderWishlist();
+}
+
+function renderPlanTabs() {
+    const container = document.getElementById("plan-tabs");
+    container.innerHTML = allPlans.map((p, i) =>
+        `<div class="plan-tab${i === currentPlanIdx ? " active" : ""}" onclick="switchPlan(${i})">${p.name}</div>`
+    ).join("");
 }
 
 function getAllPlannedCodes() {
@@ -1114,9 +1256,28 @@ document.addEventListener("click", (e) => {
     }
 });
 
+function renderAllCourses() {
+    const container = document.getElementById("all-courses-table");
+    const codes = Object.keys(COURSES).sort((a, b) => parseInt(a) - parseInt(b));
+    container.innerHTML = codes.map(code => {
+        const c = COURSES[code];
+        const avail = SEMESTER_ORDER.filter(s => AVAILABILITY[s].some(e => e.code === code));
+        const availStr = avail.length > 0 ? avail.map(s => SEM_NAMES[s].replace("20","")).join(", ") : "Not scheduled";
+        const prereqStr = c.prereqs.length > 0 ? c.prereqs.map(p => p).join(", ") : "";
+        return `<div class="ac-row">
+            <span class="ac-code">${code}</span>
+            <span class="ac-name">${c.name}</span>
+            ${prereqStr ? `<span class="ac-prereqs">req: ${prereqStr}</span>` : ""}
+            <span class="ac-avail">${availStr}</span>
+        </div>`;
+    }).join("");
+}
+
+renderPlanTabs();
 renderPriorTags();
 render();
 renderWishlist();
+renderAllCourses();
 </script>
 </body>
 </html>
