@@ -634,24 +634,42 @@ function renderChecklist() {
     coreHtml = coreHtml.replace('<span class="progress"></span>', `<span class="progress">${coreCount}/3</span>`);
     clCore.innerHTML = coreHtml;
 
-    // 2. Core 2: 2 from 5690, 5700, 5740, 5021
+    // Track consumed courses (can't double-count across requirements)
+    // Exception: 4550, 4570, 4650 can count as BOTH required AND elective
+    const consumed = new Set();
+
+    // Core courses are consumed first
+    for (const code of REQ_CORE) {
+        if (planned.has(code)) consumed.add(code);
+    }
+
+    // 2. Core 2: 2 from 5690, 5700, 5740, 5021 (only count if not already consumed)
     const clCore2 = document.getElementById("cl-core2");
     let core2Count = 0;
+    const core2Used = [];
     let core2Html = `<h4>Core Electives (2 of 4 required) <span class="progress"></span></h4>`;
     for (const code of REQ_CORE2_OPTIONS) {
-        const done = planned.has(code);
-        if (done) core2Count++;
+        const done = planned.has(code) && !consumed.has(code);
+        if (done && core2Count < REQ_CORE2_NEEDED) {
+            core2Count++;
+            core2Used.push(code);
+            consumed.add(code);
+        }
+        const inPlan = planned.has(code);
+        const usedElsewhere = inPlan && consumed.has(code) && !core2Used.includes(code);
         const sem = findSemesterForCourse(code);
-        core2Html += `<div class="check-item ${done ? "done" : "pending"}">
-            <span class="check-icon ${done ? "done" : "pending"}">${done ? "&#10003;" : "&#9675;"}</span>
+        const isDone = core2Used.includes(code);
+        core2Html += `<div class="check-item ${isDone ? "done" : "pending"}">
+            <span class="check-icon ${isDone ? "done" : "pending"}">${isDone ? "&#10003;" : "&#9675;"}</span>
             MATH ${code} — ${COURSES[code]?.name || "?"}
             ${sem ? `<span class="check-sem">${sem}</span>` : ""}
+            ${usedElsewhere ? '<span style="color:#e17055;font-size:10px;margin-left:4px;">(used in core)</span>' : ""}
         </div>`;
     }
-    core2Html = core2Html.replace('<span class="progress"></span>', `<span class="progress">${Math.min(core2Count, REQ_CORE2_NEEDED)}/${REQ_CORE2_NEEDED}</span>`);
+    core2Html = core2Html.replace('<span class="progress"></span>', `<span class="progress">${core2Count}/${REQ_CORE2_NEEDED}</span>`);
     clCore2.innerHTML = core2Html;
 
-    // 3. Required: 4600, 4570, 4550
+    // 3. Required: 4600, 4570, 4550 (these DON'T get consumed — they can also count as electives)
     const clReq = document.getElementById("cl-required");
     let reqCount = 0;
     let reqHtml = `<h4>Required Courses (all 3) <span class="progress"></span></h4>`;
@@ -669,11 +687,18 @@ function renderChecklist() {
     clReq.innerHTML = reqHtml;
 
     // 4. Electives: 4 from pool, at least 1 must be 5000+
-    // 4550, 4570, 4650 also count as electives
+    // 4550, 4570, 4650 can double-count (required + elective). All others must not be consumed.
+    const DOUBLE_COUNT = ["4550", "4570", "4650"];
     const clElec = document.getElementById("cl-electives");
     const elecTaken = [];
     for (const code of REQ_ELECTIVE_POOL) {
-        if (planned.has(code)) elecTaken.push(code);
+        if (!planned.has(code)) continue;
+        if (DOUBLE_COUNT.includes(code)) {
+            elecTaken.push(code);
+        } else if (!consumed.has(code)) {
+            elecTaken.push(code);
+            consumed.add(code);
+        }
     }
     const elec5k = elecTaken.filter(c => parseInt(c) >= 5000);
     const elecCount = elecTaken.length;
