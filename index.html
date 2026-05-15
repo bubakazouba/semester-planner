@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cal State LA Math - Semester Planner</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1a1a2e; color: #eee; padding: 30px; min-height: 100vh; }
+
+        h1 { text-align: center; color: #a29bfe; margin-bottom: 5px; font-size: 24px; }
+        .subtitle { text-align: center; color: #888; font-size: 13px; margin-bottom: 20px; }
+
+        .lookup-bar {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 16px 20px;
+            border: 1px solid #0f3460;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+        .lookup-bar label { font-size: 13px; color: #a29bfe; font-weight: 600; white-space: nowrap; padding-top: 8px; }
+        .lookup-input-wrap { position: relative; width: 300px; }
+        .lookup-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #0f3460;
+            border-radius: 6px;
+            background: #1a1a2e;
+            color: #eee;
+            font-size: 14px;
+        }
+        .lookup-input:focus { outline: none; border-color: #a29bfe; }
+        .lookup-input::placeholder { color: #555; }
+        .lookup-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #1a1a2e;
+            border: 1px solid #0f3460;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+        .lookup-dropdown.open { display: block; }
+        .lookup-option {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 13px;
+            border-bottom: 1px solid #0f3460;
+        }
+        .lookup-option:hover { background: #0f3460; }
+        .lookup-option .lo-code { font-weight: 700; }
+        .lookup-option .lo-name { color: #aaa; font-size: 11px; }
+
+        .lookup-result {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            min-height: 36px;
+            font-size: 13px;
+        }
+        .lookup-result .avail-tag {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .lookup-result .avail-tag.fall2026 { background: rgba(225,112,85,0.2); color: #e17055; }
+        .lookup-result .avail-tag.spring2027 { background: rgba(0,184,148,0.2); color: #00b894; }
+        .lookup-result .avail-tag.fall2027 { background: rgba(253,203,110,0.2); color: #fdcb6e; }
+        .lookup-result .avail-tag.spring2028 { background: rgba(116,185,255,0.2); color: #74b9ff; }
+        .lookup-result .no-result { color: #636e72; font-style: italic; }
+        .lookup-result .prereq-note { color: #e17055; font-size: 11px; width: 100%; margin-top: 4px; }
+
+        .semesters { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+
+        .semester {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 18px;
+            border: 1px solid #0f3460;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+        .semester-header {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #0f3460;
+            text-align: center;
+        }
+        .semester[data-sem="fall2026"] .semester-header { color: #e17055; }
+        .semester[data-sem="spring2027"] .semester-header { color: #00b894; }
+        .semester[data-sem="fall2027"] .semester-header { color: #fdcb6e; }
+        .semester[data-sem="spring2028"] .semester-header { color: #74b9ff; }
+
+        .added-courses { flex: 1; margin-bottom: 12px; }
+        .added-course {
+            background: #1a1a2e;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #0f3460;
+            font-size: 13px;
+        }
+        .added-course .course-info { flex: 1; }
+        .added-course .course-code { font-weight: 700; color: #dfe6e9; }
+        .added-course .course-name { color: #888; font-size: 11px; margin-top: 2px; }
+        .added-course .course-time { color: #636e72; font-size: 10px; margin-top: 1px; }
+        .added-course .remove-btn {
+            background: none; border: none; color: #e17055; cursor: pointer;
+            font-size: 16px; padding: 0 4px; opacity: 0.6;
+        }
+        .added-course .remove-btn:hover { opacity: 1; }
+        .added-course.has-warning { border-color: #e17055; background: rgba(225, 112, 85, 0.08); }
+        .added-course .warning {
+            color: #e17055;
+            font-size: 10px;
+            margin-top: 3px;
+            font-weight: 600;
+        }
+
+        .search-add-wrap { position: relative; }
+        .search-add-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px dashed #a29bfe;
+            border-radius: 6px;
+            background: #0f3460;
+            color: #eee;
+            font-size: 12px;
+            cursor: text;
+        }
+        .search-add-input:focus { outline: none; border-style: solid; border-color: #a29bfe; }
+        .search-add-input::placeholder { color: #666; }
+        .search-add-dropdown {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            background: #1a1a2e;
+            border: 1px solid #a29bfe;
+            border-radius: 6px 6px 0 0;
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 50;
+            display: none;
+        }
+        .search-add-dropdown.open { display: block; }
+        .search-add-option {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            border-bottom: 1px solid #0f3460;
+        }
+        .search-add-option:hover { background: #0f3460; }
+        .search-add-option.disabled { opacity: 0.4; pointer-events: none; }
+        .search-add-option .sao-code { font-weight: 700; }
+        .search-add-option .sao-name { color: #aaa; font-size: 11px; }
+        .search-add-option .sao-details { color: #636e72; font-size: 10px; margin-top: 1px; }
+        .search-add-option .sao-warn { color: #e17055; font-size: 10px; margin-top: 1px; }
+
+        .summary {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 18px;
+            border: 1px solid #0f3460;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .summary h3 { color: #a29bfe; margin-bottom: 8px; font-size: 14px; }
+        .summary-stats { display: flex; justify-content: center; gap: 30px; font-size: 13px; }
+        .stat-num { font-weight: 700; font-size: 18px; }
+        .stat-label { color: #888; font-size: 11px; }
+        .warnings-count { color: #e17055; }
+
+        .wishlist-section {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid #0f3460;
+            margin-bottom: 24px;
+        }
+        .wishlist-section h3 { color: #a29bfe; margin-bottom: 4px; font-size: 16px; text-align: center; }
+        .wishlist-subtitle { text-align: center; color: #636e72; font-size: 12px; margin-bottom: 14px; }
+        .wishlist-add-wrap { position: relative; max-width: 350px; margin: 0 auto 16px; }
+        .wishlist-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #0f3460;
+            border-radius: 6px;
+            background: #1a1a2e;
+            color: #eee;
+            font-size: 13px;
+        }
+        .wishlist-input:focus { outline: none; border-color: #a29bfe; }
+        .wishlist-input::placeholder { color: #555; }
+        .wishlist-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #1a1a2e;
+            border: 1px solid #a29bfe;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 60;
+            display: none;
+        }
+        .wishlist-dropdown.open { display: block; }
+        .wishlist-dropdown .wl-option {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 13px;
+            border-bottom: 1px solid #0f3460;
+        }
+        .wishlist-dropdown .wl-option:hover { background: #0f3460; }
+        .wishlist-dropdown .wl-option.disabled { opacity: 0.4; pointer-events: none; }
+        .wishlist-items {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .wishlist-item {
+            background: #1a1a2e;
+            border: 1px solid #0f3460;
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 13px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .wishlist-item.scheduled { border-color: #00b894; background: rgba(0, 184, 148, 0.08); }
+        .wishlist-item .wl-check { color: #00b894; font-weight: 700; margin-top: 2px; }
+        .wishlist-item .wl-info { flex: 1; }
+        .wishlist-item .wl-header { display: flex; align-items: center; gap: 8px; }
+        .wishlist-item .wl-code { font-weight: 700; }
+        .wishlist-item .wl-name { color: #aaa; font-size: 12px; }
+        .wishlist-item .wl-details { margin-top: 4px; font-size: 11px; color: #636e72; }
+        .wishlist-item .wl-prereqs { color: #fdcb6e; }
+        .wishlist-item .wl-avail { color: #74b9ff; }
+        .wishlist-item .wl-scheduled-in { color: #00b894; font-weight: 600; }
+        .wishlist-item .wl-remove {
+            background: none; border: none; color: #e17055; cursor: pointer;
+            font-size: 14px; opacity: 0.5; margin-top: 2px;
+        }
+        .wishlist-item .wl-remove:hover { opacity: 1; }
+
+        .checklist {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid #0f3460;
+        }
+        .checklist h3 { color: #a29bfe; margin-bottom: 16px; font-size: 16px; text-align: center; }
+        .checklist-sections { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .checklist-section { }
+        .checklist-section h4 { font-size: 13px; color: #fdcb6e; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #0f3460; }
+        .checklist-section .progress { font-size: 11px; color: #888; float: right; }
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 0;
+            font-size: 13px;
+        }
+        .check-item .check-icon { font-size: 14px; width: 18px; text-align: center; }
+        .check-item .check-icon.done { color: #00b894; }
+        .check-item .check-icon.pending { color: #636e72; }
+        .check-item.done { color: #00b894; }
+        .check-item.pending { color: #aaa; }
+        .check-item .check-sem { font-size: 10px; color: #636e72; margin-left: auto; }
+        .checklist-status {
+            text-align: center;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid #0f3460;
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .checklist-status.complete { color: #00b894; }
+        .checklist-status.incomplete { color: #e17055; }
+    </style>
+</head>
+<body>
+    <h1>Cal State LA Math — 4-Semester Planner</h1>
+    <p class="subtitle">Add courses to each semester. Warnings appear if prerequisites haven't been scheduled in a prior semester.</p>
+
+    <div class="lookup-bar">
+        <label>Course Lookup:</label>
+        <div class="lookup-input-wrap">
+            <input type="text" class="lookup-input" id="lookup-input" placeholder="Search any course..." oninput="onLookupInput()" onfocus="onLookupInput()">
+            <div class="lookup-dropdown" id="lookup-dropdown"></div>
+        </div>
+        <div class="lookup-result" id="lookup-result">
+            <span class="no-result">Select a course to see availability</span>
+        </div>
+    </div>
+
+    <div class="semesters">
+        <div class="semester" data-sem="fall2026">
+            <div class="semester-header">Fall 2026</div>
+            <div class="added-courses" id="added-fall2026"></div>
+            <div class="search-add-wrap">
+                <input type="text" class="search-add-input" placeholder="+ Search to add..." data-sem="fall2026" oninput="onSemSearch(this)" onfocus="onSemSearch(this)">
+                <div class="search-add-dropdown" id="dropdown-fall2026"></div>
+            </div>
+        </div>
+        <div class="semester" data-sem="spring2027">
+            <div class="semester-header">Spring 2027</div>
+            <div class="added-courses" id="added-spring2027"></div>
+            <div class="search-add-wrap">
+                <input type="text" class="search-add-input" placeholder="+ Search to add..." data-sem="spring2027" oninput="onSemSearch(this)" onfocus="onSemSearch(this)">
+                <div class="search-add-dropdown" id="dropdown-spring2027"></div>
+            </div>
+        </div>
+        <div class="semester" data-sem="fall2027">
+            <div class="semester-header">Fall 2027</div>
+            <div class="added-courses" id="added-fall2027"></div>
+            <div class="search-add-wrap">
+                <input type="text" class="search-add-input" placeholder="+ Search to add..." data-sem="fall2027" oninput="onSemSearch(this)" onfocus="onSemSearch(this)">
+                <div class="search-add-dropdown" id="dropdown-fall2027"></div>
+            </div>
+        </div>
+        <div class="semester" data-sem="spring2028">
+            <div class="semester-header">Spring 2028</div>
+            <div class="added-courses" id="added-spring2028"></div>
+            <div class="search-add-wrap">
+                <input type="text" class="search-add-input" placeholder="+ Search to add..." data-sem="spring2028" oninput="onSemSearch(this)" onfocus="onSemSearch(this)">
+                <div class="search-add-dropdown" id="dropdown-spring2028"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="summary">
+        <h3>Plan Summary</h3>
+        <div class="summary-stats">
+            <div><div class="stat-num" id="total-courses">0</div><div class="stat-label">Courses</div></div>
+            <div><div class="stat-num" id="total-units">0</div><div class="stat-label">Units</div></div>
+            <div><div class="stat-num warnings-count" id="total-warnings">0</div><div class="stat-label">Warnings</div></div>
+        </div>
+    </div>
+
+    <div class="wishlist-section">
+        <h3>Wishlist</h3>
+        <p class="wishlist-subtitle">Add courses you're interested in. A check appears if it's already in your schedule.</p>
+        <div class="wishlist-add-wrap">
+            <input type="text" class="wishlist-input" id="wishlist-input" placeholder="Search to add to wishlist..." oninput="onWishlistSearch()" onfocus="onWishlistSearch()">
+            <div class="wishlist-dropdown" id="wishlist-dropdown"></div>
+        </div>
+        <div class="wishlist-items" id="wishlist-items"></div>
+    </div>
+
+    <div class="checklist">
+        <h3>Degree Requirements Checklist</h3>
+        <div class="checklist-sections">
+            <div class="checklist-section" id="cl-core"></div>
+            <div class="checklist-section" id="cl-core2"></div>
+            <div class="checklist-section" id="cl-required"></div>
+            <div class="checklist-section" id="cl-electives"></div>
+        </div>
+        <div class="checklist-status" id="checklist-status"></div>
+    </div>
+
+<script>
+const SEMESTER_ORDER = ["fall2026", "spring2027", "fall2027", "spring2028"];
+const SEM_NAMES = { fall2026: "Fall 2026", spring2027: "Spring 2027", fall2027: "Fall 2027", spring2028: "Spring 2028" };
+
+const COURSES = {
+    "3450": { name: "Mathematical Reasoning", units: 3, prereqs: [] },
+    "4010": { name: "Ordinary Differential Equations", units: 3, prereqs: [] },
+    "4030": { name: "Advanced Calculus", units: 3, prereqs: [] },
+    "4050": { name: "Mathematical Finance & Interest Theory", units: 3, prereqs: [] },
+    "4100": { name: "Vector Analysis", units: 3, prereqs: [] },
+    "4300": { name: "Modern Geometry", units: 3, prereqs: [] },
+    "4460": { name: "Number Theory", units: 3, prereqs: [] },
+    "4540": { name: "Selected Topics in Advanced Math", units: 3, prereqs: [] },
+    "4550": { name: "Abstract Algebra I", units: 3, prereqs: ["3450"] },
+    "4560": { name: "Combinatorics", units: 3, prereqs: [] },
+    "4570": { name: "Linear Algebra", units: 3, prereqs: ["3450"] },
+    "4600": { name: "Analytic Geometry", units: 3, prereqs: [] },
+    "4650": { name: "Introduction to Real Analysis", units: 3, prereqs: ["3450"] },
+    "4680": { name: "Introduction to Complex Analysis", units: 3, prereqs: ["4650"] },
+    "4690": { name: "Point Set Topology", units: 3, prereqs: [] },
+    "4700": { name: "Numerical Analysis I", units: 3, prereqs: [] },
+    "4710": { name: "Numerical Analysis II", units: 3, prereqs: ["4700"] },
+    "4720": { name: "Numerical Analysis III", units: 3, prereqs: ["4710"] },
+    "4740": { name: "Theory of Probability", units: 3, prereqs: [] },
+    "4750": { name: "Mathematical Statistics", units: 3, prereqs: ["4740"] },
+    "4800": { name: "Advanced Topics in Applied Math", units: 3, prereqs: [] },
+    "4840": { name: "Graph Theory", units: 3, prereqs: [] },
+    "4900": { name: "Senior Seminar", units: 3, prereqs: [] },
+    "4901": { name: "Senior Project", units: 3, prereqs: [] },
+    "5021": { name: "Functional Analysis", units: 3, prereqs: ["4570", "5800"] },
+    "5100": { name: "Teaching Math at College Level", units: 3, prereqs: ["4650"] },
+    "5401": { name: "Theory of Groups", units: 3, prereqs: ["4550", "4570"] },
+    "5402": { name: "Theory of Rings and Fields", units: 3, prereqs: ["4550", "4570"] },
+    "5680": { name: "Advanced Complex Analysis", units: 3, prereqs: ["4680"] },
+    "5690": { name: "Topology", units: 3, prereqs: ["4650"] },
+    "5540": { name: "Advanced Topics in Combinatorics and Graph Theory", units: 3, prereqs: [] },
+    "5700": { name: "Numerical Linear Algebra", units: 3, prereqs: ["4570"] },
+    "5740": { name: "Applied Probability Theory", units: 3, prereqs: ["4740"] },
+    "5800": { name: "Real Analysis", units: 3, prereqs: ["4650"] },
+};
+
+const AVAILABILITY = {
+    fall2026: [
+        { code: "3450", days: "TR", time: "10:50 AM–12:05 PM", instructor: "TBD", section: "01" },
+        { code: "3450", days: "T", time: "12:10–1:00 PM", instructor: "TBD", section: "02" },
+        { code: "4010", days: "TR", time: "10:50 AM–12:05 PM", instructor: "Zhou" },
+        { code: "4050", days: "TR", time: "12:15–1:30 PM", instructor: "Zhong" },
+        { code: "4100", days: "TR", time: "3:05–4:20 PM", instructor: "Mijares" },
+        { code: "4300", days: "MW", time: "1:40–2:55 PM", instructor: "Shaheen" },
+        { code: "4540", days: "TR", time: "9:25–10:40 AM", instructor: "Zhong" },
+        { code: "4570", days: "MW", time: "12:15–1:30 PM", instructor: "Krebs" },
+        { code: "4600", days: "TR", time: "12:15–1:30 PM", instructor: "Mijares" },
+        { code: "4680", days: "TR", time: "4:30–5:45 PM", instructor: "da Silva" },
+        { code: "4740", days: "MW", time: "12:15–1:30 PM", instructor: "Shaheen" },
+        { code: "5401", days: "MW", time: "3:05–4:20 PM", instructor: "Troyka" },
+        { code: "5690", days: "MW", time: "4:30–5:45 PM", instructor: "Krebs" },
+        { code: "5800", days: "TR", time: "3:05–4:20 PM", instructor: "Hajaiej" },
+    ],
+    spring2027: [
+        { code: "3450", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4030", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4550", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4560", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4650", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4460", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4750", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4840", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4900", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4901", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "5402", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "5680", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "5700", days: "TBD", time: "TBD", instructor: "TBD" },
+    ],
+    fall2027: [
+        { code: "3450", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4010", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4050", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4540", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4550", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4570", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4600", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4680", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4710", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4740", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4800", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "5401", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "5740", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "5800", days: "TBD", time: "TBD", instructor: "TBD" },
+    ],
+    spring2028: [
+        { code: "3450", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4030", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4460", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4560", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4650", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4720", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4840", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4900", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "4901", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "5021", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "5100", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "5680", days: "TBD", time: "TBD", instructor: "TBD" },
+    ],
+};
+
+// Degree requirements
+const REQ_CORE = ["5800", "5401", "5680"];
+const REQ_CORE2_OPTIONS = ["5690", "5700", "5740", "5021"];
+const REQ_CORE2_NEEDED = 2;
+const REQ_REQUIRED = ["4600", "4570", "4550"];
+const REQ_ELECTIVE_POOL = ["4550", "4570", "4650", "4010", "4030", "4100", "4200", "4460", "4660", "4670", "4680", "4690", "4700", "4710", "4720", "4740", "4750", "4800", "4840", "5021", "5100", "5210", "5220", "5402", "5500", "5510", "5520", "5530", "5540", "5690", "5700", "5710", "5740", "5980"];
+const REQ_ELECTIVES_NEEDED = 4;
+
+// Load from localStorage
+let plan = JSON.parse(localStorage.getItem("csula-math-plan") || "null") || { fall2026: [], spring2027: [], fall2027: [], spring2028: [] };
+
+function savePlan() {
+    localStorage.setItem("csula-math-plan", JSON.stringify(plan));
+}
+
+function getAllPlannedCodes() {
+    const codes = new Set();
+    for (const sem of SEMESTER_ORDER) {
+        for (const c of plan[sem]) codes.add(c.code);
+    }
+    return codes;
+}
+
+function getCoursesBeforeSemester(sem) {
+    const idx = SEMESTER_ORDER.indexOf(sem);
+    let courses = new Set();
+    for (let i = 0; i < idx; i++) {
+        for (const c of plan[SEMESTER_ORDER[i]]) {
+            courses.add(c.code);
+        }
+    }
+    return courses;
+}
+
+function checkPrereqWarnings(sem, code) {
+    const course = COURSES[code];
+    if (!course || course.prereqs.length === 0) return [];
+    const priorCourses = getCoursesBeforeSemester(sem);
+    return course.prereqs.filter(p => !priorCourses.has(p));
+}
+
+function findSemesterForCourse(code) {
+    for (const sem of SEMESTER_ORDER) {
+        if (plan[sem].some(c => c.code === code)) return SEM_NAMES[sem];
+    }
+    return null;
+}
+
+function renderChecklist() {
+    const planned = getAllPlannedCodes();
+
+    // 1. Core: 5800, 5401, 5680
+    const clCore = document.getElementById("cl-core");
+    let coreCount = 0;
+    let coreHtml = `<h4>Core Courses (3 required) <span class="progress"></span></h4>`;
+    for (const code of REQ_CORE) {
+        const done = planned.has(code);
+        if (done) coreCount++;
+        const sem = findSemesterForCourse(code);
+        coreHtml += `<div class="check-item ${done ? "done" : "pending"}">
+            <span class="check-icon ${done ? "done" : "pending"}">${done ? "&#10003;" : "&#9675;"}</span>
+            MATH ${code} — ${COURSES[code]?.name || "?"}
+            ${sem ? `<span class="check-sem">${sem}</span>` : ""}
+        </div>`;
+    }
+    coreHtml = coreHtml.replace('<span class="progress"></span>', `<span class="progress">${coreCount}/3</span>`);
+    clCore.innerHTML = coreHtml;
+
+    // 2. Core 2: 2 from 5690, 5700, 5740, 5021
+    const clCore2 = document.getElementById("cl-core2");
+    let core2Count = 0;
+    let core2Html = `<h4>Core Electives (2 of 4 required) <span class="progress"></span></h4>`;
+    for (const code of REQ_CORE2_OPTIONS) {
+        const done = planned.has(code);
+        if (done) core2Count++;
+        const sem = findSemesterForCourse(code);
+        core2Html += `<div class="check-item ${done ? "done" : "pending"}">
+            <span class="check-icon ${done ? "done" : "pending"}">${done ? "&#10003;" : "&#9675;"}</span>
+            MATH ${code} — ${COURSES[code]?.name || "?"}
+            ${sem ? `<span class="check-sem">${sem}</span>` : ""}
+        </div>`;
+    }
+    core2Html = core2Html.replace('<span class="progress"></span>', `<span class="progress">${Math.min(core2Count, REQ_CORE2_NEEDED)}/${REQ_CORE2_NEEDED}</span>`);
+    clCore2.innerHTML = core2Html;
+
+    // 3. Required: 4600, 4570, 4550
+    const clReq = document.getElementById("cl-required");
+    let reqCount = 0;
+    let reqHtml = `<h4>Required Courses (all 3) <span class="progress"></span></h4>`;
+    for (const code of REQ_REQUIRED) {
+        const done = planned.has(code);
+        if (done) reqCount++;
+        const sem = findSemesterForCourse(code);
+        reqHtml += `<div class="check-item ${done ? "done" : "pending"}">
+            <span class="check-icon ${done ? "done" : "pending"}">${done ? "&#10003;" : "&#9675;"}</span>
+            MATH ${code} — ${COURSES[code]?.name || "?"}
+            ${sem ? `<span class="check-sem">${sem}</span>` : ""}
+        </div>`;
+    }
+    reqHtml = reqHtml.replace('<span class="progress"></span>', `<span class="progress">${reqCount}/3</span>`);
+    clReq.innerHTML = reqHtml;
+
+    // 4. Electives: 4 from pool, at least 1 must be 5000+
+    // 4550, 4570, 4650 also count as electives
+    const clElec = document.getElementById("cl-electives");
+    const elecTaken = [];
+    for (const code of REQ_ELECTIVE_POOL) {
+        if (planned.has(code)) elecTaken.push(code);
+    }
+    const elec5k = elecTaken.filter(c => parseInt(c) >= 5000);
+    const elecCount = elecTaken.length;
+    const has5kElective = elec5k.length >= 1;
+
+    let elecHtml = `<h4>Electives (4 required, 1+ must be 5000+) <span class="progress"></span></h4>`;
+    for (const code of elecTaken.slice(0, 6)) {
+        const sem = findSemesterForCourse(code);
+        elecHtml += `<div class="check-item done">
+            <span class="check-icon done">&#10003;</span>
+            MATH ${code} — ${COURSES[code]?.name || "?"}
+            ${sem ? `<span class="check-sem">${sem}</span>` : ""}
+        </div>`;
+    }
+    if (elecTaken.length > 6) {
+        elecHtml += `<div class="check-item done" style="color:#636e72;">+ ${elecTaken.length - 6} more</div>`;
+    }
+    const remaining = REQ_ELECTIVES_NEEDED - elecCount;
+    if (remaining > 0) {
+        elecHtml += `<div class="check-item pending"><span class="check-icon pending">&#9675;</span> ${remaining} more elective${remaining > 1 ? "s" : ""} needed</div>`;
+    }
+    if (!has5kElective && elecCount > 0) {
+        elecHtml += `<div class="check-item pending" style="color:#e17055;"><span class="check-icon pending">&#9675;</span> Need at least 1 elective at 5000+ level</div>`;
+    } else if (has5kElective) {
+        elecHtml += `<div class="check-item done"><span class="check-icon done">&#10003;</span> 5000+ elective requirement met (${elec5k.map(c => c).join(", ")})</div>`;
+    }
+    elecHtml = elecHtml.replace('<span class="progress"></span>', `<span class="progress">${Math.min(elecCount, REQ_ELECTIVES_NEEDED)}/${REQ_ELECTIVES_NEEDED}</span>`);
+    clElec.innerHTML = elecHtml;
+
+    // Overall status
+    const allMet = coreCount >= 3 && core2Count >= REQ_CORE2_NEEDED && reqCount >= 3 && elecCount >= REQ_ELECTIVES_NEEDED && has5kElective;
+    const status = document.getElementById("checklist-status");
+    if (allMet) {
+        status.className = "checklist-status complete";
+        status.textContent = "All degree requirements met!";
+    } else {
+        const missing = [];
+        if (coreCount < 3) missing.push(`${3 - coreCount} core`);
+        if (core2Count < REQ_CORE2_NEEDED) missing.push(`${REQ_CORE2_NEEDED - core2Count} core elective`);
+        if (reqCount < 3) missing.push(`${3 - reqCount} required`);
+        if (elecCount < REQ_ELECTIVES_NEEDED) missing.push(`${REQ_ELECTIVES_NEEDED - elecCount} elective`);
+        if (elecCount >= REQ_ELECTIVES_NEEDED && !has5kElective) missing.push("1 elective must be 5000+");
+        status.className = "checklist-status incomplete";
+        status.textContent = `Still need: ${missing.join(", ")}`;
+    }
+}
+
+function render() {
+    let totalCourses = 0, totalUnits = 0, totalWarnings = 0;
+
+    for (const sem of SEMESTER_ORDER) {
+        const container = document.getElementById(`added-${sem}`);
+        container.innerHTML = "";
+
+        for (const entry of plan[sem]) {
+            const course = COURSES[entry.code];
+            const missing = checkPrereqWarnings(sem, entry.code);
+            const hasWarning = missing.length > 0;
+            if (hasWarning) totalWarnings += missing.length;
+
+            const div = document.createElement("div");
+            div.className = `added-course${hasWarning ? " has-warning" : ""}`;
+
+            let html = `<div class="course-info">
+                <div class="course-code">MATH ${entry.code}</div>
+                <div class="course-name">${course ? course.name : "Unknown"}</div>`;
+            if (entry.time && entry.time !== "TBD") {
+                html += `<div class="course-time">${entry.days} ${entry.time} — ${entry.instructor}</div>`;
+            }
+            if (course && course.prereqs.length > 0) {
+                const prereqParts = course.prereqs.map(p => {
+                    const isMissing = missing.includes(p);
+                    return `<span style="color:${isMissing ? "#e17055" : "#00b894"};">${isMissing ? "⚠ " : "✓ "}MATH ${p}</span>`;
+                });
+                html += `<div class="course-time">Prereqs: ${prereqParts.join(", ")}</div>`;
+            }
+            html += `</div><button class="remove-btn" onclick="removeCourse('${sem}','${entry.code}')">&times;</button>`;
+            div.innerHTML = html;
+            container.appendChild(div);
+
+            totalCourses++;
+            if (course) totalUnits += course.units;
+        }
+    }
+
+    document.getElementById("total-courses").textContent = totalCourses;
+    document.getElementById("total-units").textContent = totalUnits;
+    document.getElementById("total-warnings").textContent = totalWarnings;
+
+    renderChecklist();
+    renderWishlist();
+    savePlan();
+}
+
+// Semester search dropdowns
+function onSemSearch(input) {
+    const sem = input.dataset.sem;
+    const query = input.value.toLowerCase().trim();
+    const dropdown = document.getElementById(`dropdown-${sem}`);
+    const available = AVAILABILITY[sem];
+    const alreadyAdded = new Set(plan[sem].map(c => c.code));
+    const priorCourses = getCoursesBeforeSemester(sem);
+
+    const filtered = available.filter(entry => {
+        const course = COURSES[entry.code];
+        const searchStr = `${entry.code} ${course ? course.name : ""}`.toLowerCase();
+        return query === "" || searchStr.includes(query);
+    });
+
+    if (filtered.length === 0) {
+        dropdown.classList.remove("open");
+        return;
+    }
+
+    dropdown.innerHTML = "";
+    for (const entry of filtered) {
+        const course = COURSES[entry.code];
+        const isAdded = alreadyAdded.has(entry.code);
+        const missing = course ? course.prereqs.filter(p => !priorCourses.has(p)) : [];
+
+        const div = document.createElement("div");
+        div.className = `search-add-option${isAdded ? " disabled" : ""}`;
+        if (!isAdded) {
+            div.onclick = () => {
+                plan[sem].push(entry);
+                input.value = "";
+                dropdown.classList.remove("open");
+                render();
+            };
+        }
+
+        let html = `<span class="sao-code">MATH ${entry.code}</span> <span class="sao-name">${course ? course.name : ""}</span>`;
+        if (entry.time && entry.time !== "TBD") {
+            html += `<div class="sao-details">${entry.days} ${entry.time} — ${entry.instructor}</div>`;
+        }
+        if (missing.length > 0) {
+            html += `<div class="sao-warn">⚠ Missing prereq: ${missing.map(m => "MATH " + m).join(", ")}</div>`;
+        }
+        if (isAdded) {
+            html += `<div class="sao-details" style="color:#a29bfe;">Already added</div>`;
+        }
+        div.innerHTML = html;
+        dropdown.appendChild(div);
+    }
+    dropdown.classList.add("open");
+}
+
+// Global lookup
+function onLookupInput() {
+    const input = document.getElementById("lookup-input");
+    const dropdown = document.getElementById("lookup-dropdown");
+    const query = input.value.toLowerCase().trim();
+
+    if (query === "") {
+        dropdown.classList.remove("open");
+        document.getElementById("lookup-result").innerHTML = `<span class="no-result">Select a course to see availability</span>`;
+        return;
+    }
+
+    const matches = Object.entries(COURSES).filter(([code, c]) => {
+        return `${code} ${c.name}`.toLowerCase().includes(query);
+    });
+
+    if (matches.length === 0) {
+        dropdown.classList.remove("open");
+        return;
+    }
+
+    dropdown.innerHTML = "";
+    for (const [code, course] of matches.slice(0, 10)) {
+        const div = document.createElement("div");
+        div.className = "lookup-option";
+        div.innerHTML = `<span class="lo-code">MATH ${code}</span> <span class="lo-name">${course.name}</span>`;
+        div.onclick = () => {
+            input.value = `MATH ${code}`;
+            dropdown.classList.remove("open");
+            showLookupResult(code);
+        };
+        dropdown.appendChild(div);
+    }
+    dropdown.classList.add("open");
+}
+
+function showLookupResult(code) {
+    const result = document.getElementById("lookup-result");
+    const course = COURSES[code];
+    const availIn = [];
+    for (const sem of SEMESTER_ORDER) {
+        if (AVAILABILITY[sem].some(e => e.code === code)) {
+            availIn.push(sem);
+        }
+    }
+
+    let html = "";
+    if (availIn.length > 0) {
+        html += `<span style="color:#aaa;font-size:12px;">Available in:</span> `;
+        for (const sem of availIn) {
+            const entry = AVAILABILITY[sem].find(e => e.code === code);
+            let detail = SEM_NAMES[sem];
+            if (entry.time && entry.time !== "TBD") {
+                detail += ` (${entry.days} ${entry.time})`;
+            }
+            html += `<span class="avail-tag ${sem}">${detail}</span> `;
+        }
+    } else {
+        html += `<span class="no-result">Not available in any of the 4 semesters</span>`;
+    }
+    if (course && course.prereqs.length > 0) {
+        html += `<div class="prereq-note">Prerequisites: ${course.prereqs.map(p => "MATH " + p + " (" + (COURSES[p]?.name || "?") + ")").join(", ")}</div>`;
+    }
+    result.innerHTML = html;
+}
+
+function removeCourse(sem, code) {
+    plan[sem] = plan[sem].filter(c => c.code !== code);
+    render();
+}
+
+// Wishlist
+let wishlist = JSON.parse(localStorage.getItem("csula-math-wishlist") || "[]");
+
+function saveWishlist() {
+    localStorage.setItem("csula-math-wishlist", JSON.stringify(wishlist));
+}
+
+function onWishlistSearch() {
+    const input = document.getElementById("wishlist-input");
+    const dropdown = document.getElementById("wishlist-dropdown");
+    const query = input.value.toLowerCase().trim();
+
+    if (query === "") {
+        dropdown.classList.remove("open");
+        return;
+    }
+
+    const matches = Object.entries(COURSES).filter(([code, c]) => {
+        return `${code} ${c.name}`.toLowerCase().includes(query);
+    });
+
+    if (matches.length === 0) {
+        dropdown.classList.remove("open");
+        return;
+    }
+
+    dropdown.innerHTML = "";
+    for (const [code, course] of matches.slice(0, 10)) {
+        const alreadyIn = wishlist.includes(code);
+        const div = document.createElement("div");
+        div.className = `wl-option${alreadyIn ? " disabled" : ""}`;
+        div.innerHTML = `<span style="font-weight:700;">MATH ${code}</span> <span style="color:#aaa;font-size:11px;">${course.name}</span>${alreadyIn ? ' <span style="color:#a29bfe;font-size:10px;">(in wishlist)</span>' : ''}`;
+        if (!alreadyIn) {
+            div.onclick = () => {
+                wishlist.push(code);
+                saveWishlist();
+                input.value = "";
+                dropdown.classList.remove("open");
+                renderWishlist();
+            };
+        }
+        dropdown.appendChild(div);
+    }
+    dropdown.classList.add("open");
+}
+
+function removeFromWishlist(code) {
+    wishlist = wishlist.filter(c => c !== code);
+    saveWishlist();
+    renderWishlist();
+}
+
+function renderWishlist() {
+    const container = document.getElementById("wishlist-items");
+    const planned = getAllPlannedCodes();
+
+    if (wishlist.length === 0) {
+        container.innerHTML = '<div style="color:#636e72;font-size:12px;text-align:center;padding:10px;">No courses in wishlist yet</div>';
+        return;
+    }
+
+    container.innerHTML = "";
+    for (const code of wishlist) {
+        const course = COURSES[code];
+        const isScheduled = planned.has(code);
+        const sem = findSemesterForCourse(code);
+
+        // Find available semesters
+        const availIn = [];
+        for (const s of SEMESTER_ORDER) {
+            if (AVAILABILITY[s].some(e => e.code === code)) {
+                availIn.push(SEM_NAMES[s]);
+            }
+        }
+
+        const div = document.createElement("div");
+        div.className = `wishlist-item${isScheduled ? " scheduled" : ""}`;
+
+        let html = "";
+        if (isScheduled) {
+            html += `<span class="wl-check">&#10003;</span>`;
+        } else {
+            html += `<span style="color:#636e72;margin-top:2px;">&#9675;</span>`;
+        }
+        html += `<div class="wl-info">`;
+        html += `<div class="wl-header"><span class="wl-code">MATH ${code}</span> <span class="wl-name">${course ? course.name : "?"}</span></div>`;
+        html += `<div class="wl-details">`;
+        if (course && course.prereqs.length > 0) {
+            html += `<span class="wl-prereqs">Prereqs: ${course.prereqs.map(p => "MATH " + p).join(", ")}</span>`;
+        } else {
+            html += `<span class="wl-prereqs">Prereqs: None</span>`;
+        }
+        html += ` · `;
+        if (availIn.length > 0) {
+            html += `<span class="wl-avail">Available: ${availIn.join(", ")}</span>`;
+        } else {
+            html += `<span style="color:#e17055;">Not in any semester rotation</span>`;
+        }
+        if (isScheduled && sem) {
+            html += ` · <span class="wl-scheduled-in">Scheduled: ${sem}</span>`;
+        }
+        html += `</div></div>`;
+        html += `<button class="wl-remove" onclick="removeFromWishlist('${code}')">&times;</button>`;
+
+        div.innerHTML = html;
+        container.appendChild(div);
+    }
+}
+
+// Close dropdowns on click outside
+document.addEventListener("click", (e) => {
+    if (!e.target.closest(".lookup-input-wrap")) {
+        document.getElementById("lookup-dropdown").classList.remove("open");
+    }
+    if (!e.target.closest(".search-add-wrap")) {
+        document.querySelectorAll(".search-add-dropdown").forEach(d => d.classList.remove("open"));
+    }
+    if (!e.target.closest(".wishlist-add-wrap")) {
+        document.getElementById("wishlist-dropdown").classList.remove("open");
+    }
+});
+
+render();
+renderWishlist();
+</script>
+</body>
+</html>
