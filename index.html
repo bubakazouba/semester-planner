@@ -1016,14 +1016,8 @@ function onLookupInput() {
     const dropdown = document.getElementById("lookup-dropdown");
     const query = input.value.toLowerCase().trim();
 
-    if (query === "") {
-        dropdown.classList.remove("open");
-        document.getElementById("lookup-result").innerHTML = `<span class="no-result">Select a course to see availability</span>`;
-        return;
-    }
-
     const matches = Object.entries(COURSES).filter(([code, c]) => {
-        return `${code} ${c.name}`.toLowerCase().includes(query);
+        return query === "" || `${code} ${c.name}`.toLowerCase().includes(query);
     });
 
     if (matches.length === 0) {
@@ -1032,7 +1026,7 @@ function onLookupInput() {
     }
 
     dropdown.innerHTML = "";
-    for (const [code, course] of matches.slice(0, 10)) {
+    for (const [code, course] of matches) {
         const div = document.createElement("div");
         div.className = "lookup-option";
         div.innerHTML = `<span class="lo-code">MATH ${code}</span> <span class="lo-name">${course.name}</span>`;
@@ -1093,13 +1087,8 @@ function onWishlistSearch() {
     const dropdown = document.getElementById("wishlist-dropdown");
     const query = input.value.toLowerCase().trim();
 
-    if (query === "") {
-        dropdown.classList.remove("open");
-        return;
-    }
-
     const matches = Object.entries(COURSES).filter(([code, c]) => {
-        return `${code} ${c.name}`.toLowerCase().includes(query);
+        return query === "" || `${code} ${c.name}`.toLowerCase().includes(query);
     });
 
     if (matches.length === 0) {
@@ -1108,7 +1097,7 @@ function onWishlistSearch() {
     }
 
     dropdown.innerHTML = "";
-    for (const [code, course] of matches.slice(0, 10)) {
+    for (const [code, course] of matches) {
         const alreadyIn = wishlist.includes(code);
         const div = document.createElement("div");
         div.className = `wl-option${alreadyIn ? " disabled" : ""}`;
@@ -1196,13 +1185,8 @@ function onPriorSearch() {
     const dropdown = document.getElementById("prior-dropdown");
     const query = input.value.toLowerCase().trim();
 
-    if (query === "") {
-        dropdown.classList.remove("open");
-        return;
-    }
-
     const matches = Object.entries(COURSES).filter(([code, c]) => {
-        return `${code} ${c.name}`.toLowerCase().includes(query);
+        return query === "" || `${code} ${c.name}`.toLowerCase().includes(query);
     });
 
     if (matches.length === 0) {
@@ -1211,7 +1195,7 @@ function onPriorSearch() {
     }
 
     dropdown.innerHTML = "";
-    for (const [code, course] of matches.slice(0, 10)) {
+    for (const [code, course] of matches) {
         const alreadyIn = priorCourses.includes(code);
         const div = document.createElement("div");
         div.className = `pr-option${alreadyIn ? " disabled" : ""}`;
