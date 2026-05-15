@@ -430,11 +430,180 @@
         }
         .plan-btn:hover { border-color: #a29bfe; color: #eee; }
         .plan-btn.plan-delete:hover { border-color: #e17055; color: #e17055; }
+
+        .top-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            margin-bottom: 20px;
+        }
+        .top-tab {
+            padding: 10px 28px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid #0f3460;
+            background: #16213e;
+            color: #888;
+            transition: all 0.15s;
+        }
+        .top-tab:first-child { border-radius: 8px 0 0 8px; }
+        .top-tab:last-child { border-radius: 0 8px 8px 0; }
+        .top-tab.active { background: #6c5ce7; border-color: #6c5ce7; color: #fff; }
+        .top-tab:hover:not(.active) { color: #eee; border-color: #a29bfe; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Auto scheduler styles */
+        .auto-config-section {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #0f3460;
+            margin-bottom: 20px;
+        }
+        .auto-config-section h3 { color: #a29bfe; font-size: 14px; margin-bottom: 10px; }
+        .auto-config-row { display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap; }
+        .auto-search-wrap { position: relative; width: 280px; }
+        .auto-search-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #0f3460;
+            border-radius: 6px;
+            background: #1a1a2e;
+            color: #eee;
+            font-size: 13px;
+        }
+        .auto-search-input:focus { outline: none; border-color: #a29bfe; }
+        .auto-search-input::placeholder { color: #555; }
+        .auto-search-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #1a1a2e;
+            border: 1px solid #a29bfe;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+        .auto-search-dropdown.open { display: block; }
+        .auto-search-dropdown .asd-option {
+            padding: 7px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            border-bottom: 1px solid #0f3460;
+        }
+        .auto-search-dropdown .asd-option:hover { background: #0f3460; }
+        .auto-search-dropdown .asd-option.disabled { opacity: 0.4; pointer-events: none; }
+
+        .auto-tags { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
+        .auto-tag {
+            border-radius: 4px;
+            padding: 5px 9px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .auto-tag.prior { background: rgba(0,184,148,0.15); border: 1px solid #00b894; color: #00b894; }
+        .auto-tag.goal { background: rgba(162,155,254,0.15); border: 1px solid #a29bfe; color: #a29bfe; }
+        .auto-tag .atag-remove {
+            background: none; border: none; color: inherit; cursor: pointer;
+            font-size: 13px; opacity: 0.6; line-height: 1;
+        }
+        .auto-tag .atag-remove:hover { opacity: 1; }
+
+        .generate-btn {
+            display: block;
+            margin: 20px auto;
+            background: #6c5ce7;
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .generate-btn:hover { background: #5a4bd1; }
+
+        .auto-result {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #0f3460;
+            margin-bottom: 20px;
+        }
+        .auto-result h3 { color: #a29bfe; font-size: 14px; margin-bottom: 14px; text-align: center; }
+        .auto-semesters { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+        .auto-sem {
+            background: #1a1a2e;
+            border-radius: 8px;
+            padding: 14px;
+            border: 1px solid #0f3460;
+            min-height: 180px;
+        }
+        .auto-sem-header { font-size: 13px; font-weight: 700; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #0f3460; text-align: center; }
+        .auto-sc {
+            padding: 6px 10px; margin-bottom: 4px; border-radius: 5px; font-size: 12px; border: 1px solid #0f3460;
+        }
+        .auto-sc.is-goal { background: rgba(162,155,254,0.1); border-color: #a29bfe; }
+        .auto-sc.is-prereq { background: rgba(253,203,110,0.08); border-color: #fdcb6e; }
+        .auto-sc .sc-code { font-weight: 700; }
+        .auto-sc .sc-name { color: #aaa; font-size: 11px; }
+        .auto-sc .sc-time { color: #636e72; font-size: 10px; margin-top: 2px; }
+        .auto-sc .sc-tag { font-size: 9px; padding: 1px 5px; border-radius: 3px; margin-left: 6px; font-weight: 600; }
+        .auto-sc .sc-tag.goal-tag { background: rgba(162,155,254,0.3); color: #a29bfe; }
+        .auto-sc .sc-tag.prereq-tag { background: rgba(253,203,110,0.3); color: #fdcb6e; }
+
+        .auto-warnings {
+            background: rgba(225,112,85,0.08); border: 1px solid #e17055; border-radius: 8px;
+            padding: 12px 16px; margin-top: 14px; font-size: 12px; color: #e17055;
+        }
+        .auto-warnings h4 { margin-bottom: 6px; }
+        .auto-warnings li { margin-left: 16px; margin-bottom: 3px; }
+
+        .apply-btn {
+            display: block;
+            margin: 14px auto 0;
+            background: #00b894;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .apply-btn:hover { background: #00a381; }
+
+        .max-courses-config {
+            display: flex; align-items: center; gap: 8px; margin-top: 12px;
+        }
+        .max-courses-config label { font-size: 12px; color: #888; }
+        .max-courses-config input {
+            width: 50px; padding: 4px 8px; border: 1px solid #0f3460; border-radius: 4px;
+            background: #1a1a2e; color: #eee; font-size: 13px; text-align: center;
+        }
+        .max-courses-config input:focus { outline: none; border-color: #a29bfe; }
     </style>
 </head>
 <body>
     <h1>Cal State LA Math — 4-Semester Planner</h1>
     <p class="subtitle">Add courses to each semester. Warnings appear if prerequisites haven't been scheduled in a prior semester.</p>
+
+    <div class="top-tabs">
+        <div class="top-tab active" onclick="switchTopTab('manual')">Manual Planner</div>
+        <div class="top-tab" onclick="switchTopTab('auto')">Auto Scheduler</div>
+    </div>
+
+    <div class="tab-content active" id="tab-manual">
 
     <div class="plan-switcher">
         <div class="plan-tabs" id="plan-tabs"></div>
@@ -535,6 +704,45 @@
         <h3>All Courses Reference</h3>
         <div class="all-courses-table" id="all-courses-table"></div>
     </div>
+
+    </div><!-- end tab-manual -->
+
+    <div class="tab-content" id="tab-auto">
+        <div class="auto-config-section">
+            <h3>Already Completed / Transferred</h3>
+            <div class="auto-config-row">
+                <div class="auto-search-wrap">
+                    <input type="text" class="auto-search-input" id="auto-prior-input" placeholder="Search to add..." oninput="onAutoPriorSearch()" onfocus="onAutoPriorSearch()">
+                    <div class="auto-search-dropdown" id="auto-prior-dropdown"></div>
+                </div>
+                <div class="auto-tags" id="auto-prior-tags"></div>
+            </div>
+        </div>
+
+        <div class="auto-config-section">
+            <h3>Courses I Want to Take</h3>
+            <div class="auto-config-row">
+                <div class="auto-search-wrap">
+                    <input type="text" class="auto-search-input" id="auto-goal-input" placeholder="Search to add..." oninput="onAutoGoalSearch()" onfocus="onAutoGoalSearch()">
+                    <div class="auto-search-dropdown" id="auto-goal-dropdown"></div>
+                </div>
+                <div class="auto-tags" id="auto-goal-tags"></div>
+            </div>
+            <div class="max-courses-config">
+                <label>Max courses per semester:</label>
+                <input type="number" id="max-per-sem" value="3" min="1" max="6">
+            </div>
+        </div>
+
+        <button class="generate-btn" onclick="generateSchedule()">Generate Schedule</button>
+
+        <div class="auto-result" id="auto-result" style="display:none;">
+            <h3>Generated Schedule</h3>
+            <div class="auto-semesters" id="auto-result-semesters"></div>
+            <div id="auto-warnings-container"></div>
+            <button class="apply-btn" onclick="applyToPlan()">Apply to Manual Planner (new plan)</button>
+        </div>
+    </div><!-- end tab-auto -->
 
 <script>
 const SEMESTER_ORDER = ["fall2026", "spring2027", "fall2027", "spring2028"];
@@ -1272,6 +1480,237 @@ renderPriorTags();
 render();
 renderWishlist();
 renderAllCourses();
+
+// === TOP TABS ===
+function switchTopTab(tab) {
+    document.querySelectorAll('.top-tab').forEach((t, i) => {
+        t.classList.toggle('active', (tab === 'manual' && i === 0) || (tab === 'auto' && i === 1));
+    });
+    document.getElementById('tab-manual').classList.toggle('active', tab === 'manual');
+    document.getElementById('tab-auto').classList.toggle('active', tab === 'auto');
+    if (tab === 'auto') { renderAutoPriorTags(); renderAutoGoalTags(); }
+}
+
+// === AUTO SCHEDULER ===
+let autoGoals = JSON.parse(localStorage.getItem("csula-auto-goals") || "[]");
+let autoPrior = JSON.parse(localStorage.getItem("csula-auto-prior") || "[]");
+let lastGeneratedSchedule = null;
+
+function saveAutoGoals() { localStorage.setItem("csula-auto-goals", JSON.stringify(autoGoals)); }
+function saveAutoPrior() { localStorage.setItem("csula-auto-prior", JSON.stringify(autoPrior)); }
+
+function autoSearchHandler(inputId, dropdownId, listFn, addFn) {
+    const input = document.getElementById(inputId);
+    const dropdown = document.getElementById(dropdownId);
+    const query = input.value.toLowerCase().trim();
+
+    const matches = Object.entries(COURSES).filter(([code, c]) =>
+        query === "" || `${code} ${c.name}`.toLowerCase().includes(query)
+    );
+    if (matches.length === 0) { dropdown.classList.remove("open"); return; }
+
+    dropdown.innerHTML = "";
+    for (const [code, course] of matches) {
+        const alreadyIn = listFn().includes(code);
+        const div = document.createElement("div");
+        div.className = `asd-option${alreadyIn ? " disabled" : ""}`;
+        div.innerHTML = `<span style="font-weight:700;">MATH ${code}</span> <span style="color:#aaa;">${course.name}</span>${alreadyIn ? ' <span style="color:#a29bfe;">(added)</span>' : ''}`;
+        if (!alreadyIn) {
+            div.onclick = () => { addFn(code); input.value = ""; dropdown.classList.remove("open"); };
+        }
+        dropdown.appendChild(div);
+    }
+    dropdown.classList.add("open");
+}
+
+function onAutoPriorSearch() {
+    autoSearchHandler("auto-prior-input", "auto-prior-dropdown", () => autoPrior, (code) => {
+        autoPrior.push(code); saveAutoPrior(); renderAutoPriorTags();
+    });
+}
+function onAutoGoalSearch() {
+    autoSearchHandler("auto-goal-input", "auto-goal-dropdown", () => autoGoals, (code) => {
+        autoGoals.push(code); saveAutoGoals(); renderAutoGoalTags();
+    });
+}
+
+function removeAutoPrior(code) { autoPrior = autoPrior.filter(c => c !== code); saveAutoPrior(); renderAutoPriorTags(); }
+function removeAutoGoal(code) { autoGoals = autoGoals.filter(c => c !== code); saveAutoGoals(); renderAutoGoalTags(); }
+
+function renderAutoPriorTags() {
+    const container = document.getElementById("auto-prior-tags");
+    if (autoPrior.length === 0) { container.innerHTML = '<span style="color:#636e72;font-size:11px;">None</span>'; return; }
+    container.innerHTML = autoPrior.map(code => {
+        const c = COURSES[code];
+        return `<span class="auto-tag prior">MATH ${code}${c ? " — " + c.name : ""}<button class="atag-remove" onclick="removeAutoPrior('${code}')">&times;</button></span>`;
+    }).join("");
+}
+
+function renderAutoGoalTags() {
+    const container = document.getElementById("auto-goal-tags");
+    if (autoGoals.length === 0) { container.innerHTML = '<span style="color:#636e72;font-size:11px;">None — add courses you want to take</span>'; return; }
+    container.innerHTML = autoGoals.map(code => {
+        const c = COURSES[code];
+        return `<span class="auto-tag goal">MATH ${code}${c ? " — " + c.name : ""}<button class="atag-remove" onclick="removeAutoGoal('${code}')">&times;</button></span>`;
+    }).join("");
+}
+
+function getAllPrereqsAuto(code, visited = new Set()) {
+    if (visited.has(code)) return [];
+    visited.add(code);
+    const course = COURSES[code];
+    if (!course) return [];
+    let result = [];
+    for (const p of course.prereqs) {
+        result.push(p);
+        result = result.concat(getAllPrereqsAuto(p, visited));
+    }
+    return result;
+}
+
+function generateSchedule() {
+    const maxPerSem = parseInt(document.getElementById("max-per-sem").value) || 3;
+    const prior = new Set(autoPrior);
+
+    const allNeeded = new Set();
+    for (const code of autoGoals) {
+        if (!prior.has(code)) allNeeded.add(code);
+        for (const p of getAllPrereqsAuto(code)) {
+            if (!prior.has(p)) allNeeded.add(p);
+        }
+    }
+
+    const schedule = { fall2026: [], spring2027: [], fall2027: [], spring2028: [] };
+    const placed = new Set();
+    const warnings = [];
+
+    let changed = true;
+    let iterations = 0;
+    while (changed && iterations < 20) {
+        changed = false;
+        iterations++;
+        for (const sem of SEMESTER_ORDER) {
+            if (schedule[sem].length >= maxPerSem) continue;
+            const availCodes = AVAILABILITY[sem].map(e => e.code);
+            const candidates = [];
+            for (const code of allNeeded) {
+                if (placed.has(code)) continue;
+                if (!availCodes.includes(code)) continue;
+                const course = COURSES[code];
+                if (!course) continue;
+                const semIdx = SEMESTER_ORDER.indexOf(sem);
+                const allPrereqsMet = course.prereqs.every(p => {
+                    if (prior.has(p)) return true;
+                    if (!placed.has(p)) return false;
+                    for (let i = 0; i < semIdx; i++) {
+                        if (schedule[SEMESTER_ORDER[i]].some(e => e.code === p)) return true;
+                    }
+                    return false;
+                });
+                if (allPrereqsMet) candidates.push(code);
+            }
+            candidates.sort((a, b) => {
+                const aIsGoal = autoGoals.includes(a);
+                const bIsGoal = autoGoals.includes(b);
+                if (!aIsGoal && bIsGoal) return -1;
+                if (aIsGoal && !bIsGoal) return 1;
+                return 0;
+            });
+            for (const code of candidates) {
+                if (schedule[sem].length >= maxPerSem) break;
+                const entry = AVAILABILITY[sem].find(e => e.code === code);
+                schedule[sem].push({ code, ...entry, isGoal: autoGoals.includes(code) });
+                placed.add(code);
+                changed = true;
+            }
+        }
+    }
+
+    for (const code of allNeeded) {
+        if (!placed.has(code)) {
+            const avail = SEMESTER_ORDER.filter(s => AVAILABILITY[s].some(e => e.code === code));
+            if (avail.length === 0) {
+                warnings.push(`MATH ${code} (${COURSES[code]?.name || "?"}) is not offered in any of the 4 semesters`);
+            } else {
+                warnings.push(`MATH ${code} (${COURSES[code]?.name || "?"}) could not be placed — semesters full or prereq chain too long`);
+            }
+        }
+    }
+
+    lastGeneratedSchedule = schedule;
+    renderAutoResult(schedule, warnings);
+}
+
+function renderAutoResult(schedule, warnings) {
+    const section = document.getElementById("auto-result");
+    section.style.display = "";
+    const container = document.getElementById("auto-result-semesters");
+    container.innerHTML = "";
+    const semColors = { fall2026: "#e17055", spring2027: "#00b894", fall2027: "#fdcb6e", spring2028: "#74b9ff" };
+
+    for (const sem of SEMESTER_ORDER) {
+        const div = document.createElement("div");
+        div.className = "auto-sem";
+        let html = `<div class="auto-sem-header" style="color:${semColors[sem]}">${SEM_NAMES[sem]}</div>`;
+        if (schedule[sem].length === 0) {
+            html += `<div style="color:#636e72;font-size:11px;text-align:center;padding:20px;">Empty</div>`;
+        }
+        for (const entry of schedule[sem]) {
+            const course = COURSES[entry.code];
+            html += `<div class="auto-sc ${entry.isGoal ? "is-goal" : "is-prereq"}">
+                <span class="sc-code">MATH ${entry.code}</span>
+                <span class="sc-tag ${entry.isGoal ? "goal-tag" : "prereq-tag"}">${entry.isGoal ? "GOAL" : "PREREQ"}</span>
+                <div class="sc-name">${course ? course.name : "?"}</div>
+                ${entry.days && entry.time ? `<div class="sc-time">${entry.days} ${entry.time}</div>` : ""}
+            </div>`;
+        }
+        div.innerHTML = html;
+        container.appendChild(div);
+    }
+
+    const wc = document.getElementById("auto-warnings-container");
+    if (warnings.length > 0) {
+        wc.innerHTML = `<div class="auto-warnings"><h4>Could not schedule:</h4><ul>${warnings.map(w => `<li>${w}</li>`).join("")}</ul></div>`;
+    } else {
+        wc.innerHTML = "";
+    }
+}
+
+function applyToPlan() {
+    if (!lastGeneratedSchedule) return;
+    const name = prompt("Name for the new plan:", "Auto-Generated");
+    if (!name) return;
+
+    // Save current plan state
+    allPlans[currentPlanIdx].data = plan;
+    allPlans[currentPlanIdx].prior = priorCourses;
+
+    // Create new plan from generated schedule
+    const newPlanData = { fall2026: [], spring2027: [], fall2027: [], spring2028: [] };
+    for (const sem of SEMESTER_ORDER) {
+        newPlanData[sem] = lastGeneratedSchedule[sem].map(e => ({
+            code: e.code, days: e.days || "TBD", time: e.time || "TBD", instructor: e.instructor || "TBD"
+        }));
+    }
+    allPlans.push({ name, data: newPlanData, prior: [...autoPrior] });
+    currentPlanIdx = allPlans.length - 1;
+    plan = allPlans[currentPlanIdx].data;
+    priorCourses = allPlans[currentPlanIdx].prior;
+    savePlans();
+    renderPlanTabs();
+    renderPriorTags();
+    render();
+    renderWishlist();
+    switchTopTab('manual');
+}
+
+// Close auto dropdowns
+document.addEventListener("click", (e) => {
+    if (!e.target.closest("#auto-prior-input") && !e.target.closest("#auto-prior-dropdown"))
+        document.getElementById("auto-prior-dropdown")?.classList.remove("open");
+    if (!e.target.closest("#auto-goal-input") && !e.target.closest("#auto-goal-dropdown"))
+        document.getElementById("auto-goal-dropdown")?.classList.remove("open");
+});
 </script>
 </body>
 </html>
