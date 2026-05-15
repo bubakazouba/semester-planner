@@ -440,6 +440,7 @@
         <div class="plan-tabs" id="plan-tabs"></div>
         <div class="plan-actions">
             <button class="plan-btn plan-new" onclick="newPlan()">+ New Plan</button>
+            <button class="plan-btn" onclick="copyPlan()">Copy</button>
             <button class="plan-btn plan-rename" onclick="renamePlan()">Rename</button>
             <button class="plan-btn plan-delete" onclick="deletePlan()">Delete</button>
         </div>
@@ -691,6 +692,15 @@ function newPlan() {
     const name = prompt("Name for new plan:", `Plan ${String.fromCharCode(65 + allPlans.length)}`);
     if (!name) return;
     allPlans.push({ name, data: {...EMPTY_PLAN, fall2026: [], spring2027: [], fall2027: [], spring2028: []}, prior: [] });
+    switchPlan(allPlans.length - 1);
+}
+
+function copyPlan() {
+    const name = prompt("Name for copied plan:", allPlans[currentPlanIdx].name + " (copy)");
+    if (!name) return;
+    const copy = JSON.parse(JSON.stringify(allPlans[currentPlanIdx]));
+    copy.name = name;
+    allPlans.push(copy);
     switchPlan(allPlans.length - 1);
 }
 
