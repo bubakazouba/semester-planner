@@ -11,6 +11,72 @@
         h1 { text-align: center; color: #a29bfe; margin-bottom: 5px; font-size: 24px; }
         .subtitle { text-align: center; color: #888; font-size: 13px; margin-bottom: 20px; }
 
+        .prior-courses-bar {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 14px 20px;
+            border: 1px solid #0f3460;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .prior-courses-bar label { font-size: 13px; color: #00b894; font-weight: 600; white-space: nowrap; }
+        .prior-search-wrap { position: relative; width: 220px; }
+        .prior-input {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #0f3460;
+            border-radius: 5px;
+            background: #1a1a2e;
+            color: #eee;
+            font-size: 13px;
+        }
+        .prior-input:focus { outline: none; border-color: #00b894; }
+        .prior-input::placeholder { color: #555; }
+        .prior-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #1a1a2e;
+            border: 1px solid #00b894;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 110;
+            display: none;
+        }
+        .prior-dropdown.open { display: block; }
+        .prior-dropdown .pr-option {
+            padding: 7px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            border-bottom: 1px solid #0f3460;
+        }
+        .prior-dropdown .pr-option:hover { background: #0f3460; }
+        .prior-dropdown .pr-option.disabled { opacity: 0.4; pointer-events: none; }
+        .prior-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+        .prior-tag {
+            background: rgba(0, 184, 148, 0.15);
+            border: 1px solid #00b894;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            color: #00b894;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .prior-tag .pr-remove {
+            background: none; border: none; color: #00b894; cursor: pointer;
+            font-size: 13px; opacity: 0.6; line-height: 1;
+        }
+        .prior-tag .pr-remove:hover { opacity: 1; }
+
         .lookup-bar {
             background: #16213e;
             border-radius: 12px;
@@ -305,6 +371,15 @@
     <h1>Cal State LA Math — 4-Semester Planner</h1>
     <p class="subtitle">Add courses to each semester. Warnings appear if prerequisites haven't been scheduled in a prior semester.</p>
 
+    <div class="prior-courses-bar">
+        <label>Already Completed / Transferred:</label>
+        <div class="prior-search-wrap">
+            <input type="text" class="prior-input" id="prior-input" placeholder="Search to add..." oninput="onPriorSearch()" onfocus="onPriorSearch()">
+            <div class="prior-dropdown" id="prior-dropdown"></div>
+        </div>
+        <div class="prior-tags" id="prior-tags"></div>
+    </div>
+
     <div class="lookup-bar">
         <label>Course Lookup:</label>
         <div class="lookup-input-wrap">
@@ -496,13 +571,18 @@ const REQ_ELECTIVES_NEEDED = 4;
 
 // Load from localStorage
 let plan = JSON.parse(localStorage.getItem("csula-math-plan") || "null") || { fall2026: [], spring2027: [], fall2027: [], spring2028: [] };
+let priorCourses = JSON.parse(localStorage.getItem("csula-math-prior") || "[]");
 
 function savePlan() {
     localStorage.setItem("csula-math-plan", JSON.stringify(plan));
 }
 
+function savePrior() {
+    localStorage.setItem("csula-math-prior", JSON.stringify(priorCourses));
+}
+
 function getAllPlannedCodes() {
-    const codes = new Set();
+    const codes = new Set(priorCourses);
     for (const sem of SEMESTER_ORDER) {
         for (const c of plan[sem]) codes.add(c.code);
     }
@@ -511,7 +591,7 @@ function getAllPlannedCodes() {
 
 function getCoursesBeforeSemester(sem) {
     const idx = SEMESTER_ORDER.indexOf(sem);
-    let courses = new Set();
+    let courses = new Set(priorCourses);
     for (let i = 0; i < idx; i++) {
         for (const c of plan[SEMESTER_ORDER[i]]) {
             courses.add(c.code);
@@ -921,6 +1001,66 @@ function renderWishlist() {
     }
 }
 
+// Prior courses
+function onPriorSearch() {
+    const input = document.getElementById("prior-input");
+    const dropdown = document.getElementById("prior-dropdown");
+    const query = input.value.toLowerCase().trim();
+
+    if (query === "") {
+        dropdown.classList.remove("open");
+        return;
+    }
+
+    const matches = Object.entries(COURSES).filter(([code, c]) => {
+        return `${code} ${c.name}`.toLowerCase().includes(query);
+    });
+
+    if (matches.length === 0) {
+        dropdown.classList.remove("open");
+        return;
+    }
+
+    dropdown.innerHTML = "";
+    for (const [code, course] of matches.slice(0, 10)) {
+        const alreadyIn = priorCourses.includes(code);
+        const div = document.createElement("div");
+        div.className = `pr-option${alreadyIn ? " disabled" : ""}`;
+        div.innerHTML = `<span style="font-weight:700;">MATH ${code}</span> <span style="color:#aaa;">${course.name}</span>${alreadyIn ? ' <span style="color:#00b894;">(added)</span>' : ''}`;
+        if (!alreadyIn) {
+            div.onclick = () => {
+                priorCourses.push(code);
+                savePrior();
+                input.value = "";
+                dropdown.classList.remove("open");
+                renderPriorTags();
+                render();
+            };
+        }
+        dropdown.appendChild(div);
+    }
+    dropdown.classList.add("open");
+}
+
+function removePrior(code) {
+    priorCourses = priorCourses.filter(c => c !== code);
+    savePrior();
+    renderPriorTags();
+    render();
+}
+
+function renderPriorTags() {
+    const container = document.getElementById("prior-tags");
+    if (priorCourses.length === 0) {
+        container.innerHTML = '<span style="color:#636e72;font-size:11px;">None</span>';
+        return;
+    }
+    container.innerHTML = priorCourses.map(code => {
+        const course = COURSES[code];
+        return `<span class="prior-tag">MATH ${code}${course ? " — " + course.name : ""}<button class="pr-remove" onclick="removePrior('${code}')">&times;</button></span>`;
+    }).join("");
+}
+
 // Close dropdowns on click outside
 document.addEventListener("click", (e) => {
     if (!e.target.closest(".lookup-input-wrap")) {
@@ -932,8 +1072,12 @@ document.addEventListener("click", (e) => {
     if (!e.target.closest(".wishlist-add-wrap")) {
         document.getElementById("wishlist-dropdown").classList.remove("open");
     }
+    if (!e.target.closest(".prior-search-wrap")) {
+        document.getElementById("prior-dropdown").classList.remove("open");
+    }
 });
 
+renderPriorTags();
 render();
 renderWishlist();
 </script>
