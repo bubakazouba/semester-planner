@@ -703,12 +703,22 @@ function renderChecklist() {
     elecHtml = elecHtml.replace('<span class="progress"></span>', `<span class="progress">${Math.min(elecCount, REQ_ELECTIVES_NEEDED)}/${REQ_ELECTIVES_NEEDED}</span>`);
     clElec.innerHTML = elecHtml;
 
+    // Unit count (only 4000+ and 5000+ courses count toward the 27)
+    let totalGradUnits = 0;
+    for (const code of planned) {
+        const c = COURSES[code];
+        if (c && parseInt(code) >= 4000) totalGradUnits += c.units;
+    }
+    const unitsNeeded = 27;
+    const unitsMet = totalGradUnits >= unitsNeeded;
+
     // Overall status
-    const allMet = coreCount >= 3 && core2Count >= REQ_CORE2_NEEDED && reqCount >= 3 && elecCount >= REQ_ELECTIVES_NEEDED && has5kElective;
+    const allMet = coreCount >= 3 && core2Count >= REQ_CORE2_NEEDED && reqCount >= 3 && elecCount >= REQ_ELECTIVES_NEEDED && has5kElective && unitsMet;
     const status = document.getElementById("checklist-status");
+    let statusText = "";
     if (allMet) {
         status.className = "checklist-status complete";
-        status.textContent = "All degree requirements met!";
+        statusText = `All degree requirements met! (${totalGradUnits}/${unitsNeeded} units)`;
     } else {
         const missing = [];
         if (coreCount < 3) missing.push(`${3 - coreCount} core`);
@@ -716,9 +726,11 @@ function renderChecklist() {
         if (reqCount < 3) missing.push(`${3 - reqCount} required`);
         if (elecCount < REQ_ELECTIVES_NEEDED) missing.push(`${REQ_ELECTIVES_NEEDED - elecCount} elective`);
         if (elecCount >= REQ_ELECTIVES_NEEDED && !has5kElective) missing.push("1 elective must be 5000+");
+        if (!unitsMet) missing.push(`${unitsNeeded - totalGradUnits} more units (${totalGradUnits}/${unitsNeeded})`);
         status.className = "checklist-status incomplete";
-        status.textContent = `Still need: ${missing.join(", ")}`;
+        statusText = `Still need: ${missing.join(", ")}`;
     }
+    status.textContent = statusText;
 }
 
 function render() {
