@@ -616,6 +616,21 @@
             background: #1a1a2e; color: #eee; font-size: 13px; text-align: center;
         }
         .max-courses-config input:focus { outline: none; border-color: #a29bfe; }
+
+        /* --- mobile / responsive (added for Tailscale app) --- */
+        @media (max-width: 820px) {
+          .semesters { grid-template-columns: 1fr !important; gap: 14px; }
+          .auto-semesters { grid-template-columns: 1fr !important; }
+          .checklist-sections { grid-template-columns: 1fr !important; }
+          body { font-size: 15px; }
+          .container, body > * { padding-left: 12px; padding-right: 12px; }
+        }
+        @media (max-width: 820px) {
+          input, select, button, textarea { font-size: 16px; }   /* stop iOS zoom-on-focus */
+          .course-row, .lookup-result, .wishlist-item { min-height: 40px; }
+          h1 { font-size: 22px; }
+        }
+        html { -webkit-text-size-adjust: 100%; }
     </style>
 </head>
 <body>
@@ -773,6 +788,53 @@
         </div>
     </div><!-- end tab-auto -->
 
+<script>
+/* Server persistence v2 (2026-08-18): data lives in the app (state.json), not the
+   browser. Fixes the "not saving server-side" bug:
+     (1) API url is derived from location.pathname (trailing-slash-proof), not a bare
+         relative 'api/state' that could resolve wrong.
+     (2) FLUSH on tab hide/close via fetch keepalive - the old code only did a 400ms
+         debounced push, so any change made right before navigating away or closing the
+         tab never got sent. That is exactly how edits silently failed to persist.
+     (3) A small on-screen "saved / saving... / save failed" indicator + real error
+         handling, instead of swallowing every failure. */
+(function(){
+  var KEYS=['csula-math-plans','csula-math-plan-idx','csula-math-wishlist',
+            'csula-auto-goals','csula-auto-prior','csula-math-prior','csula-math-plan'];
+  var API=(location.pathname.replace(/\/+$/,''))+'/api/state';
+  var serverOK=false;
+  try{
+    var x=new XMLHttpRequest(); x.open('GET',API,false); x.send(null);
+    if(x.status===200){ serverOK=true; var s=JSON.parse(x.responseText||'{}');
+      if(s && s.__ls){ for(var k in s.__ls){ try{ localStorage.setItem(k, s.__ls[k]); }catch(e){} } } }
+  }catch(e){}
+  /* Pages-safe: with no /api/state backend (e.g. GitHub Pages) the probe fails, so we
+     stay on plain localStorage - no setItem override, no save indicator, no failing
+     POSTs. Only the Tailscale Flask app, which answers /api/state, turns on server sync.
+     This lets ONE file serve both the github Pages site and the Tailscale app. */
+  if(!serverOK){ return; }
+  var _set=localStorage.setItem.bind(localStorage), t=null, dirty=false;
+  function status(msg,ok){ var el=document.getElementById('__saveind');
+    if(!el){ el=document.createElement('div'); el.id='__saveind';
+      el.style.cssText='position:fixed;bottom:10px;right:12px;z-index:99999;font:12px system-ui;'+
+        'padding:4px 9px;border-radius:8px;color:#fff;opacity:.92;transition:opacity .3s';
+      (document.body||document.documentElement).appendChild(el); }
+    el.textContent=msg; el.style.background=ok?'#1c7c4a':'#b23';
+    if(ok&&msg==='saved'){ setTimeout(function(){ el.style.opacity='0'; },1200); } else { el.style.opacity='.92'; } }
+  function push(keepalive){
+    var ls={}; KEYS.forEach(function(k){ var v=localStorage.getItem(k); if(v!=null) ls[k]=v; });
+    var opts={method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({__ls:ls})};
+    if(keepalive) opts.keepalive=true;
+    return fetch(API,opts).then(function(r){ dirty=!r.ok; status(r.ok?'saved':'save failed',r.ok); })
+      .catch(function(){ status('save failed (offline?)',false); });
+  }
+  localStorage.setItem=function(k,v){ _set(k,v);
+    if(KEYS.indexOf(k)>=0){ dirty=true; status('saving...',true); clearTimeout(t); t=setTimeout(function(){push(false);},400); } };
+  function flush(){ if(dirty){ clearTimeout(t); push(true); } }
+  window.addEventListener('pagehide',flush);
+  document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') flush(); });
+})();
+</script>
 <script>
 const SEMESTER_ORDER = ["fall2026", "spring2027", "fall2027", "spring2028"];
 const SEM_NAMES = { fall2026: "Fall 2026", spring2027: "Spring 2027", fall2027: "Fall 2027", spring2028: "Spring 2028" };
