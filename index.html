@@ -802,18 +802,27 @@
   var KEYS=['csula-math-plans','csula-math-plan-idx','csula-math-wishlist',
             'csula-auto-goals','csula-auto-prior','csula-math-prior','csula-math-plan'];
   var API=(location.pathname.replace(/\/+$/,''))+'/api/state';
-  var serverOK=false;
+  var serverOK=false, pendingAtLoad=false;
+  try{ pendingAtLoad = localStorage.getItem('__sync_pending')==='1'; }catch(e){}
   try{
     var x=new XMLHttpRequest(); x.open('GET',API,false); x.send(null);
-    if(x.status===200){ serverOK=true; var s=JSON.parse(x.responseText||'{}');
-      if(s && s.__ls){ for(var k in s.__ls){ try{ localStorage.setItem(k, s.__ls[k]); }catch(e){} } } }
+    if(x.status===200){ serverOK=true;
+      /* unsent local edits win over the server copy; otherwise the server copy wins */
+      if(!pendingAtLoad){ var s=JSON.parse(x.responseText||'{}');
+        if(s && s.__ls){ for(var k in s.__ls){ try{ localStorage.setItem(k, s.__ls[k]); }catch(e){} } } } }
   }catch(e){}
   /* Pages-safe: with no /api/state backend (e.g. GitHub Pages) the probe fails, so we
      stay on plain localStorage - no setItem override, no save indicator, no failing
      POSTs. Only the Tailscale Flask app, which answers /api/state, turns on server sync.
      This lets ONE file serve both the github Pages site and the Tailscale app. */
   if(!serverOK){ return; }
-  var _set=localStorage.setItem.bind(localStorage), t=null, dirty=false;
+  /* 2026-10-20: hook Storage.prototype, not the localStorage instance. Assigning
+     localStorage.setItem=fn is ignored by WebKit (Safari / Edge on iPad): edits there
+     never triggered a push, and the next reload pulled the stale server copy back over
+     them ("reloading the page reverts the state"). A pending-push flag also survives a
+     reload, so unsent local edits are pushed instead of overwritten. */
+  var _proto=Storage.prototype.setItem, t=null, dirty=false;
+  var _set=function(k,v){ _proto.call(localStorage,k,v); };
   function status(msg,ok){ var el=document.getElementById('__saveind');
     if(!el){ el=document.createElement('div'); el.id='__saveind';
       el.style.cssText='position:fixed;bottom:10px;right:12px;z-index:99999;font:12px system-ui;'+
@@ -825,11 +834,14 @@
     var ls={}; KEYS.forEach(function(k){ var v=localStorage.getItem(k); if(v!=null) ls[k]=v; });
     var opts={method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({__ls:ls})};
     if(keepalive) opts.keepalive=true;
-    return fetch(API,opts).then(function(r){ dirty=!r.ok; status(r.ok?'saved':'save failed',r.ok); })
+    return fetch(API,opts).then(function(r){ dirty=!r.ok; if(r.ok){ try{ localStorage.removeItem('__sync_pending'); }catch(e){} }
+        status(r.ok?'saved':'save failed',r.ok); })
       .catch(function(){ status('save failed (offline?)',false); });
   }
-  localStorage.setItem=function(k,v){ _set(k,v);
-    if(KEYS.indexOf(k)>=0){ dirty=true; status('saving...',true); clearTimeout(t); t=setTimeout(function(){push(false);},400); } };
+  Storage.prototype.setItem=function(k,v){ _proto.call(this,k,v);
+    if(this===localStorage && KEYS.indexOf(k)>=0){ dirty=true; _proto.call(localStorage,'__sync_pending','1');
+      status('saving...',true); clearTimeout(t); t=setTimeout(function(){push(false);},400); } };
+  if(pendingAtLoad){ dirty=true; push(false); }
   function flush(){ if(dirty){ clearTimeout(t); push(true); } }
   window.addEventListener('pagehide',flush);
   document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') flush(); });
