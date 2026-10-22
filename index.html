@@ -366,6 +366,13 @@
         .checklist-status.complete { color: #00b894; }
         .checklist-status.incomplete { color: #e17055; }
 
+        .approval-badge {
+            max-width: 1200px; margin: 0 auto 14px; padding: 10px 14px;
+            border-radius: 8px; border: 1px solid #00b894; background: #0d2b24;
+            color: #55efc4; font-size: 14px; line-height: 1.5;
+        }
+        .approval-badge .ab-main { font-weight: 600; }
+        .approval-badge .ab-sub { color: #81ecec; font-weight: 400; display: block; margin-top: 4px; }
         .notes-section {
             background: #16213e;
             border-radius: 12px;
@@ -739,6 +746,8 @@
         <div class="wishlist-items" id="wishlist-items"></div>
     </div>
 
+    <div class="approval-badge" id="approval-badge" style="display:none"></div>
+
     <div class="notes-section">
         <h3>Notes</h3>
         <textarea class="notes-textarea" id="notes-textarea" placeholder="Free-form notes for this plan..." oninput="saveNotes()"></textarea>
@@ -995,6 +1004,7 @@ function switchPlan(idx) {
     plan = allPlans[currentPlanIdx].data;
     priorCourses = allPlans[currentPlanIdx].prior || [];
     document.getElementById("notes-textarea").value = allPlans[currentPlanIdx].notes || "";
+    renderApproval();
     savePlans();
     renderPlanTabs();
     renderPriorTags();
@@ -1589,6 +1599,28 @@ render();
 renderWishlist();
 renderAllCourses();
 document.getElementById("notes-textarea").value = allPlans[currentPlanIdx].notes || "";
+    renderApproval();
+
+
+// === APPROVAL / FREEZE BADGE (2026-10-22) ===
+// The approval lives on the plan record (frozen / approvedBy / approvedOn / assumption),
+// not in the notes box, so it survives edits and can be read back programmatically.
+function renderApproval() {
+    var el = document.getElementById("approval-badge");
+    if (!el) return;
+    var p = allPlans[currentPlanIdx] || {};
+    if (!p.frozen && !p.approvedBy) { el.style.display = "none"; el.innerHTML = ""; return; }
+    var bits = [];
+    if (p.approvedBy) {
+        bits.push('<span class="ab-main">\u2713 ' + p.approvedBy + ' approved' +
+                  (p.approvedOn ? ' \u2014 ' + p.approvedOn : '') + '</span>');
+    }
+    if (p.frozen) bits.push('<span class="ab-main">FROZEN</span>');
+    var head = bits.join(' &nbsp;\u00b7&nbsp; ');
+    var sub = p.assumption ? '<span class="ab-sub">' + p.assumption + '</span>' : '';
+    el.innerHTML = head + sub;
+    el.style.display = "block";
+}
 
 // === TOP TABS ===
 function switchTopTab(tab) {
