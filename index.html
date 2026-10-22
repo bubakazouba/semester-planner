@@ -366,6 +366,10 @@
         .checklist-status.complete { color: #00b894; }
         .checklist-status.incomplete { color: #e17055; }
 
+        .frozen-lock .search-add-input,
+        .frozen-lock .prior-input { opacity: 0.45; cursor: not-allowed; }
+        .frozen-lock .remove-btn,
+        .frozen-lock .pr-remove { display: none !important; }
         .approval-badge {
             max-width: 1200px; margin: 0 auto 14px; padding: 10px 14px;
             border-radius: 8px; border: 1px solid #00b894; background: #0d2b24;
@@ -1005,6 +1009,7 @@ function switchPlan(idx) {
     priorCourses = allPlans[currentPlanIdx].prior || [];
     document.getElementById("notes-textarea").value = allPlans[currentPlanIdx].notes || "";
     renderApproval();
+    applyFrozenUI();
     savePlans();
     renderPlanTabs();
     renderPriorTags();
@@ -1037,6 +1042,7 @@ function renamePlan() {
 }
 
 function deletePlan() {
+    if (refuseIfFrozen('delete it')) return;
     if (allPlans.length <= 1) { alert("Can't delete the only plan."); return; }
     if (!confirm(`Delete "${allPlans[currentPlanIdx].name}"?`)) return;
     allPlans.splice(currentPlanIdx, 1);
@@ -1311,6 +1317,7 @@ function onSemSearch(input) {
         div.className = `search-add-option${isAdded ? " disabled" : ""}`;
         if (!isAdded) {
             div.onclick = () => {
+                if (refuseIfFrozen('add a course')) return;
                 plan[sem].push(entry);
                 input.value = "";
                 dropdown.classList.remove("open");
@@ -1395,6 +1402,7 @@ function showLookupResult(code) {
 }
 
 function removeCourse(sem, code) {
+    if (refuseIfFrozen('remove a course')) return;
     plan[sem] = plan[sem].filter(c => c.code !== code);
     render();
 }
@@ -1526,6 +1534,7 @@ function onPriorSearch() {
         div.innerHTML = `<span style="font-weight:700;">MATH ${code}</span> <span style="color:#aaa;">${course.name}</span>${alreadyIn ? ' <span style="color:#00b894;">(added)</span>' : ''}`;
         if (!alreadyIn) {
             div.onclick = () => {
+                if (refuseIfFrozen('change the completed list')) return;
                 priorCourses.push(code);
                 savePrior();
                 input.value = "";
@@ -1540,6 +1549,7 @@ function onPriorSearch() {
 }
 
 function removePrior(code) {
+    if (refuseIfFrozen('change the completed list')) return;
     priorCourses = priorCourses.filter(c => c !== code);
     savePrior();
     renderPriorTags();
@@ -1591,7 +1601,7 @@ function renderAllCourses() {
     }).join("");
 }
 
-function saveNotes() { savePlans(); }
+function saveNotes() { if (isFrozen()) return; savePlans(); }
 
 renderPlanTabs();
 renderPriorTags();
@@ -1600,6 +1610,7 @@ renderWishlist();
 renderAllCourses();
 document.getElementById("notes-textarea").value = allPlans[currentPlanIdx].notes || "";
     renderApproval();
+    applyFrozenUI();
 
 
 // === APPROVAL / FREEZE BADGE (2026-10-22) ===
@@ -1620,6 +1631,34 @@ function renderApproval() {
     var sub = p.assumption ? '<span class="ab-sub">' + p.assumption + '</span>' : '';
     el.innerHTML = head + sub;
     el.style.display = "block";
+}
+
+
+// === FREEZE ENFORCEMENT (2026-10-22, "I want them actually frozen") ===
+// The guard sits in the mutators, not only in the styling, so a frozen plan cannot be
+// changed from the console or by a keyboard path that skips the disabled control.
+function isFrozen() {
+    var p = allPlans[currentPlanIdx];
+    return !!(p && p.frozen);
+}
+function refuseIfFrozen(what) {
+    if (!isFrozen()) return false;
+    var p = allPlans[currentPlanIdx];
+    alert('"' + p.name + '" is frozen' +
+          (p.approvedBy ? ' (' + p.approvedBy + ' approved it' +
+           (p.approvedOn ? ' on ' + p.approvedOn : '') + ')' : '') +
+          '.\n\nUnfreeze it before you ' + (what || 'change it') + '.');
+    return true;
+}
+function applyFrozenUI() {
+    var on = isFrozen();
+    document.body.classList.toggle("frozen-lock", on);
+    document.querySelectorAll(".search-add-input, .prior-input").forEach(function(el){
+        el.disabled = on;
+        if (on) el.value = "";
+    });
+    var n = document.getElementById("notes-textarea");
+    if (n) n.readOnly = on;
 }
 
 // === TOP TABS ===
