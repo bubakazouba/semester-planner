@@ -660,6 +660,7 @@
         <div class="plan-actions">
             <button class="plan-btn plan-new" onclick="newPlan()">+ New Plan</button>
             <button class="plan-btn" onclick="copyPlan()">Copy</button>
+            <button class="plan-btn" id="freeze-btn" onclick="toggleFreeze()">Freeze</button>
             <button class="plan-btn plan-rename" onclick="renamePlan()">Rename</button>
             <button class="plan-btn plan-delete" onclick="deletePlan()">Delete</button>
         </div>
@@ -1050,6 +1051,8 @@ function copyPlan() {
     if (!name) return;
     const copy = JSON.parse(JSON.stringify(allPlans[currentPlanIdx]));
     copy.name = name;
+    // A copy is a new draft: the approval and the lock belong to the original only.
+    delete copy.frozen; delete copy.approvedBy; delete copy.approvedOn;
     allPlans.push(copy);
     switchPlan(allPlans.length - 1);
 }
@@ -1671,8 +1674,18 @@ function refuseIfFrozen(what) {
           '.\n\nUnfreeze it before you ' + (what || 'change it') + '.');
     return true;
 }
+function toggleFreeze() {
+    var p = allPlans[currentPlanIdx];
+    if (!p) return;
+    p.frozen = !p.frozen;
+    savePlans();
+    renderApproval();
+    applyFrozenUI();
+}
 function applyFrozenUI() {
     var on = isFrozen();
+    var fb = document.getElementById("freeze-btn");
+    if (fb) fb.textContent = on ? "Unfreeze" : "Freeze";
     document.body.classList.toggle("frozen-lock", on);
     document.querySelectorAll(".search-add-input, .prior-input").forEach(function(el){
         el.disabled = on;
