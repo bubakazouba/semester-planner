@@ -901,7 +901,14 @@ const COURSES = {
     "5700": { name: "Numerical Linear Algebra", units: 3, prereqs: ["4570"] },
     "5740": { name: "Applied Probability Theory", units: 3, prereqs: ["4740"] },
     "5800": { name: "Real Analysis", units: 3, prereqs: ["4650"] },
+    "CS 4780": { name: "Cryptography and Information Security", units: 3, prereqs: [] },
+    "CS 5112": { name: "Design and Analysis of Algorithms", units: 3, prereqs: [] },
+    "CS 5780": { name: "Advanced Information Security", units: 3, prereqs: ["CS 4780"] },
+    "CS 5540": { name: "Graduate Topics in Computer Science", units: 3, prereqs: [] },
 };
+
+// Course label: numeric keys are MATH, keys with their own prefix ("CS 4780") print as-is.
+function cname(code) { return /^[A-Z]/.test(String(code)) ? String(code) : "MATH " + code; }
 
 const AVAILABILITY = {
     fall2026: [
@@ -934,6 +941,10 @@ const AVAILABILITY = {
         { code: "5402", days: "MW", time: "3:05–4:20 PM", instructor: "Troyka" },
         { code: "5021", days: "TR", time: "3:05–4:20 PM", instructor: "Mijares" },
         { code: "5680", days: "TR", time: "4:30–5:45 PM", instructor: "Da Silva" },
+        { code: "CS 4780", days: "TBD", time: "TBD", instructor: "TBD (schedule not verified)" },
+        { code: "CS 5112", days: "TBD", time: "TBD", instructor: "TBD (schedule not verified)" },
+        { code: "CS 5780", days: "TBD", time: "TBD", instructor: "TBD (schedule not verified)" },
+        { code: "CS 5540", days: "TBD", time: "TBD", instructor: "TBD (schedule not verified)" },
     ],
     fall2027: [
         { code: "3450", days: "TBD", time: "TBD", instructor: "TBD" },
@@ -950,6 +961,10 @@ const AVAILABILITY = {
         { code: "5401", days: "TBD", time: "TBD", instructor: "TBD" },
         { code: "5740", days: "TBD", time: "TBD", instructor: "TBD" },
         { code: "5800", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "CS 4780", days: "TBD", time: "TBD", instructor: "TBD (schedule not verified)" },
+        { code: "CS 5112", days: "TBD", time: "TBD", instructor: "TBD (schedule not verified)" },
+        { code: "CS 5780", days: "TBD", time: "TBD", instructor: "TBD (schedule not verified)" },
+        { code: "CS 5540", days: "TBD", time: "TBD", instructor: "TBD (schedule not verified)" },
     ],
     spring2028: [
         { code: "3450", days: "TBD", time: "TBD", instructor: "TBD" },
@@ -964,6 +979,10 @@ const AVAILABILITY = {
         { code: "5100", days: "TBD", time: "TBD", instructor: "TBD" },
         { code: "5680", days: "TBD", time: "TBD", instructor: "TBD" },
         { code: "5700", days: "TBD", time: "TBD", instructor: "TBD" },
+        { code: "CS 4780", days: "TBD", time: "TBD", instructor: "TBD (schedule not verified)" },
+        { code: "CS 5112", days: "TBD", time: "TBD", instructor: "TBD (schedule not verified)" },
+        { code: "CS 5780", days: "TBD", time: "TBD", instructor: "TBD (schedule not verified)" },
+        { code: "CS 5540", days: "TBD", time: "TBD", instructor: "TBD (schedule not verified)" },
     ],
 };
 
@@ -1111,7 +1130,7 @@ function renderChecklist() {
         const sem = findSemesterForCourse(code);
         coreHtml += `<div class="check-item ${done ? "done" : "pending"}">
             <span class="check-icon ${done ? "done" : "pending"}">${done ? "&#10003;" : "&#9675;"}</span>
-            MATH ${code} — ${COURSES[code]?.name || "?"}
+            ${cname(code)} — ${COURSES[code]?.name || "?"}
             ${sem ? `<span class="check-sem">${sem}</span>` : ""}
         </div>`;
     }
@@ -1145,7 +1164,7 @@ function renderChecklist() {
         const isDone = core2Used.includes(code);
         core2Html += `<div class="check-item ${isDone ? "done" : "pending"}">
             <span class="check-icon ${isDone ? "done" : "pending"}">${isDone ? "&#10003;" : "&#9675;"}</span>
-            MATH ${code} — ${COURSES[code]?.name || "?"}
+            ${cname(code)} — ${COURSES[code]?.name || "?"}
             ${sem ? `<span class="check-sem">${sem}</span>` : ""}
             ${usedElsewhere ? '<span style="color:#e17055;font-size:10px;margin-left:4px;">(used in core)</span>' : ""}
         </div>`;
@@ -1163,7 +1182,7 @@ function renderChecklist() {
         const sem = findSemesterForCourse(code);
         reqHtml += `<div class="check-item ${done ? "done" : "pending"}">
             <span class="check-icon ${done ? "done" : "pending"}">${done ? "&#10003;" : "&#9675;"}</span>
-            MATH ${code} — ${COURSES[code]?.name || "?"}
+            ${cname(code)} — ${COURSES[code]?.name || "?"}
             ${sem ? `<span class="check-sem">${sem}</span>` : ""}
         </div>`;
     }
@@ -1193,7 +1212,7 @@ function renderChecklist() {
         const sem = findSemesterForCourse(code);
         elecHtml += `<div class="check-item done">
             <span class="check-icon done">&#10003;</span>
-            MATH ${code} — ${COURSES[code]?.name || "?"}
+            ${cname(code)} — ${COURSES[code]?.name || "?"}
             ${sem ? `<span class="check-sem">${sem}</span>` : ""}
         </div>`;
     }
@@ -1259,7 +1278,7 @@ function render() {
             div.className = `added-course${hasWarning ? " has-warning" : ""}`;
 
             let html = `<div class="course-info">
-                <div class="course-code">MATH ${entry.code}</div>
+                <div class="course-code">${cname(entry.code)}</div>
                 <div class="course-name">${course ? course.name : "Unknown"}</div>`;
             if (entry.time && entry.time !== "TBD") {
                 html += `<div class="course-time">${entry.days} ${entry.time} — ${entry.instructor}</div>`;
@@ -1267,7 +1286,7 @@ function render() {
             if (course && course.prereqs.length > 0) {
                 const prereqParts = course.prereqs.map(p => {
                     const isMissing = missing.includes(p);
-                    return `<span style="color:${isMissing ? "#e17055" : "#00b894"};">${isMissing ? "⚠ " : "✓ "}MATH ${p}</span>`;
+                    return `<span style="color:${isMissing ? "#e17055" : "#00b894"};">${isMissing ? "⚠ " : "✓ "}${cname(p)}</span>`;
                 });
                 html += `<div class="course-time">Prereqs: ${prereqParts.join(", ")}</div>`;
             }
@@ -1327,12 +1346,12 @@ function onSemSearch(input) {
             };
         }
 
-        let html = `<span class="sao-code">MATH ${entry.code}</span> <span class="sao-name">${course ? course.name : ""}</span>`;
+        let html = `<span class="sao-code">${cname(entry.code)}</span> <span class="sao-name">${course ? course.name : ""}</span>`;
         if (entry.time && entry.time !== "TBD") {
             html += `<div class="sao-details">${entry.days} ${entry.time} — ${entry.instructor}</div>`;
         }
         if (missing.length > 0) {
-            html += `<div class="sao-warn">⚠ Missing prereq: ${missing.map(m => "MATH " + m).join(", ")}</div>`;
+            html += `<div class="sao-warn">⚠ Missing prereq: ${missing.map(m => cname(m)).join(", ")}</div>`;
         }
         if (isAdded) {
             html += `<div class="sao-details" style="color:#a29bfe;">Already added</div>`;
@@ -1362,9 +1381,9 @@ function onLookupInput() {
     for (const [code, course] of matches) {
         const div = document.createElement("div");
         div.className = "lookup-option";
-        div.innerHTML = `<span class="lo-code">MATH ${code}</span> <span class="lo-name">${course.name}</span>`;
+        div.innerHTML = `<span class="lo-code">${cname(code)}</span> <span class="lo-name">${course.name}</span>`;
         div.onclick = () => {
-            input.value = `MATH ${code}`;
+            input.value = `${cname(code)}`;
             dropdown.classList.remove("open");
             showLookupResult(code);
         };
@@ -1398,7 +1417,7 @@ function showLookupResult(code) {
         html += `<span class="no-result">Not available in any of the 4 semesters</span>`;
     }
     if (course && course.prereqs.length > 0) {
-        html += `<div class="prereq-note">Prerequisites: ${course.prereqs.map(p => "MATH " + p + " (" + (COURSES[p]?.name || "?") + ")").join(", ")}</div>`;
+        html += `<div class="prereq-note">Prerequisites: ${course.prereqs.map(p => cname(p) + " (" + (COURSES[p]?.name || "?") + ")").join(", ")}</div>`;
     }
     result.innerHTML = html;
 }
@@ -1435,7 +1454,7 @@ function onWishlistSearch() {
         const alreadyIn = wishlist.includes(code);
         const div = document.createElement("div");
         div.className = `wl-option${alreadyIn ? " disabled" : ""}`;
-        div.innerHTML = `<span style="font-weight:700;">MATH ${code}</span> <span style="color:#aaa;font-size:11px;">${course.name}</span>${alreadyIn ? ' <span style="color:#a29bfe;font-size:10px;">(in wishlist)</span>' : ''}`;
+        div.innerHTML = `<span style="font-weight:700;">${cname(code)}</span> <span style="color:#aaa;font-size:11px;">${course.name}</span>${alreadyIn ? ' <span style="color:#a29bfe;font-size:10px;">(in wishlist)</span>' : ''}`;
         if (!alreadyIn) {
             div.onclick = () => {
                 wishlist.push(code);
@@ -1489,10 +1508,10 @@ function renderWishlist() {
             html += `<span style="color:#636e72;margin-top:2px;">&#9675;</span>`;
         }
         html += `<div class="wl-info">`;
-        html += `<div class="wl-header"><span class="wl-code">MATH ${code}</span> <span class="wl-name">${course ? course.name : "?"}</span></div>`;
+        html += `<div class="wl-header"><span class="wl-code">${cname(code)}</span> <span class="wl-name">${course ? course.name : "?"}</span></div>`;
         html += `<div class="wl-details">`;
         if (course && course.prereqs.length > 0) {
-            html += `<span class="wl-prereqs">Prereqs: ${course.prereqs.map(p => "MATH " + p).join(", ")}</span>`;
+            html += `<span class="wl-prereqs">Prereqs: ${course.prereqs.map(p => cname(p)).join(", ")}</span>`;
         } else {
             html += `<span class="wl-prereqs">Prereqs: None</span>`;
         }
@@ -1533,7 +1552,7 @@ function onPriorSearch() {
         const alreadyIn = priorCourses.includes(code);
         const div = document.createElement("div");
         div.className = `pr-option${alreadyIn ? " disabled" : ""}`;
-        div.innerHTML = `<span style="font-weight:700;">MATH ${code}</span> <span style="color:#aaa;">${course.name}</span>${alreadyIn ? ' <span style="color:#00b894;">(added)</span>' : ''}`;
+        div.innerHTML = `<span style="font-weight:700;">${cname(code)}</span> <span style="color:#aaa;">${course.name}</span>${alreadyIn ? ' <span style="color:#00b894;">(added)</span>' : ''}`;
         if (!alreadyIn) {
             div.onclick = () => {
                 if (refuseIfFrozen('change the completed list')) return;
@@ -1566,7 +1585,7 @@ function renderPriorTags() {
     }
     container.innerHTML = priorCourses.map(code => {
         const course = COURSES[code];
-        return `<span class="prior-tag">MATH ${code}${course ? " — " + course.name : ""}<button class="pr-remove" onclick="removePrior('${code}')">&times;</button></span>`;
+        return `<span class="prior-tag">${cname(code)}${course ? " — " + course.name : ""}<button class="pr-remove" onclick="removePrior('${code}')">&times;</button></span>`;
     }).join("");
 }
 
@@ -1696,7 +1715,7 @@ function autoSearchHandler(inputId, dropdownId, listFn, addFn) {
         const alreadyIn = listFn().includes(code);
         const div = document.createElement("div");
         div.className = `asd-option${alreadyIn ? " disabled" : ""}`;
-        div.innerHTML = `<span style="font-weight:700;">MATH ${code}</span> <span style="color:#aaa;">${course.name}</span>${alreadyIn ? ' <span style="color:#a29bfe;">(added)</span>' : ''}`;
+        div.innerHTML = `<span style="font-weight:700;">${cname(code)}</span> <span style="color:#aaa;">${course.name}</span>${alreadyIn ? ' <span style="color:#a29bfe;">(added)</span>' : ''}`;
         if (!alreadyIn) {
             div.onclick = () => { addFn(code); input.value = ""; dropdown.classList.remove("open"); };
         }
@@ -1724,7 +1743,7 @@ function renderAutoPriorTags() {
     if (autoPrior.length === 0) { container.innerHTML = '<span style="color:#636e72;font-size:11px;">None</span>'; return; }
     container.innerHTML = autoPrior.map(code => {
         const c = COURSES[code];
-        return `<span class="auto-tag prior">MATH ${code}${c ? " — " + c.name : ""}<button class="atag-remove" onclick="removeAutoPrior('${code}')">&times;</button></span>`;
+        return `<span class="auto-tag prior">${cname(code)}${c ? " — " + c.name : ""}<button class="atag-remove" onclick="removeAutoPrior('${code}')">&times;</button></span>`;
     }).join("");
 }
 
@@ -1733,7 +1752,7 @@ function renderAutoGoalTags() {
     if (autoGoals.length === 0) { container.innerHTML = '<span style="color:#636e72;font-size:11px;">None — add courses you want to take</span>'; return; }
     container.innerHTML = autoGoals.map(code => {
         const c = COURSES[code];
-        return `<span class="auto-tag goal">MATH ${code}${c ? " — " + c.name : ""}<button class="atag-remove" onclick="removeAutoGoal('${code}')">&times;</button></span>`;
+        return `<span class="auto-tag goal">${cname(code)}${c ? " — " + c.name : ""}<button class="atag-remove" onclick="removeAutoGoal('${code}')">&times;</button></span>`;
     }).join("");
 }
 
@@ -1812,9 +1831,9 @@ function generateSchedule() {
         if (!placed.has(code)) {
             const avail = SEMESTER_ORDER.filter(s => AVAILABILITY[s].some(e => e.code === code));
             if (avail.length === 0) {
-                warnings.push(`MATH ${code} (${COURSES[code]?.name || "?"}) is not offered in any of the 4 semesters`);
+                warnings.push(`${cname(code)} (${COURSES[code]?.name || "?"}) is not offered in any of the 4 semesters`);
             } else {
-                warnings.push(`MATH ${code} (${COURSES[code]?.name || "?"}) could not be placed — semesters full or prereq chain too long`);
+                warnings.push(`${cname(code)} (${COURSES[code]?.name || "?"}) could not be placed — semesters full or prereq chain too long`);
             }
         }
     }
@@ -1840,7 +1859,7 @@ function renderAutoResult(schedule, warnings) {
         for (const entry of schedule[sem]) {
             const course = COURSES[entry.code];
             html += `<div class="auto-sc ${entry.isGoal ? "is-goal" : "is-prereq"}">
-                <span class="sc-code">MATH ${entry.code}</span>
+                <span class="sc-code">${cname(entry.code)}</span>
                 <span class="sc-tag ${entry.isGoal ? "goal-tag" : "prereq-tag"}">${entry.isGoal ? "GOAL" : "PREREQ"}</span>
                 <div class="sc-name">${course ? course.name : "?"}</div>
                 ${entry.days && entry.time ? `<div class="sc-time">${entry.days} ${entry.time}</div>` : ""}
